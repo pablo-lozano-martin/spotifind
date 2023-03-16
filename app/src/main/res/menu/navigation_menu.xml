@@ -5,7 +5,7 @@
         android:icon="@drawable/friendlist_icon"
         android:id="@+id/friendlist"/>
     <item android:title="Radar"
-        android:icon="@drawable/radar_icon"
+        android:icon="@drawable/logoprueba"
         android:id="@+id/radar"/>
     <item android:title="Profile"
         android:icon="@drawable/profile_icon"

@@ -11,10 +11,14 @@ import android.os.Bundle;
 import android.os.Handler;
 
 import com.example.spotifind.databinding.ActivityMainBinding;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.SupportMapFragment;
 
 public class MainActivity extends AppCompatActivity {
 
     ActivityMainBinding binding;
+    private GoogleMap map;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -22,6 +26,11 @@ public class MainActivity extends AppCompatActivity {
         getSupportActionBar().hide();
         setContentView(R.layout.activity_main);
         showSplashScreen();
+
+        // Inicializar el mapa
+        /*SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.map);
+        mapFragment.getMapAsync((OnMapReadyCallback) this);*/
     }
 
 
@@ -32,7 +41,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void run() {
                 Intent intent = new Intent(MainActivity.this, RadarActivity.class);
-                //startActivity(intent);
+                startActivity(intent);
                 finish();
             }
         }, 5000); // muestra la splash screen por 5 segundos antes de cargar la actividad principal

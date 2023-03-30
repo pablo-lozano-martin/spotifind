@@ -18,7 +18,7 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
-public class MainActivity extends AppCompatActivity implements OnMapReadyCallback{
+public class MainActivity extends AppCompatActivity{
 
     ActivityMainBinding binding;
     private GoogleMap map;
@@ -28,13 +28,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         super.onCreate(savedInstanceState);
         getSupportActionBar().hide();
         setContentView(R.layout.activity_main);
-        //showSplashScreen();
-
-        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.map);
-        mapFragment.getMapAsync(this);
-
+        showSplashScreen();
     }
 
 
@@ -48,8 +42,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 startActivity(intent);
                 finish();
             }
-        }, 5000); // muestra la splash screen por 5 segundos antes de cargar la actividad principal
-        binding = ActivityMainBinding.inflate(getLayoutInflater());
+        }, 1000); // muestra la splash screen por 5 segundos antes de cargar la actividad principal
+        /*binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(R.layout.activity_main);
         replaceFragment(new RadarFragment()); //Comienza con el fragment del radar al iniciar la app
 
@@ -69,21 +63,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
 
             return true;
-        });
+        });*/
     }
-
-    @Override
-    public void onMapReady(GoogleMap googleMap) {
-        map = googleMap;
-
-        // Add a marker in Sydney and move the camera
-        LatLng sydney = new LatLng(-34, 151);
-        map.addMarker(new MarkerOptions()
-                .position(sydney)
-                .title("Marker in Sydney"));
-        map.moveCamera(CameraUpdateFactory.newLatLng(sydney));
-    }
-
 
     private void replaceFragment(Fragment fragment){ //Intercambia el fragment actual por otro
         FragmentManager fragmentManager = getSupportFragmentManager();

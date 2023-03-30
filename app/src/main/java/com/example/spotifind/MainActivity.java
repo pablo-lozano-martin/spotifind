@@ -11,11 +11,14 @@ import android.os.Bundle;
 import android.os.Handler;
 
 import com.example.spotifind.databinding.ActivityMainBinding;
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements OnMapReadyCallback{
 
     ActivityMainBinding binding;
     private GoogleMap map;
@@ -25,12 +28,13 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         getSupportActionBar().hide();
         setContentView(R.layout.activity_main);
-        showSplashScreen();
+        //showSplashScreen();
 
-        // Inicializar el mapa
-        /*SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
-        mapFragment.getMapAsync((OnMapReadyCallback) this);*/
+        mapFragment.getMapAsync(this);
+
     }
 
 
@@ -67,6 +71,19 @@ public class MainActivity extends AppCompatActivity {
             return true;
         });
     }
+
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        map = googleMap;
+
+        // Add a marker in Sydney and move the camera
+        LatLng sydney = new LatLng(-34, 151);
+        map.addMarker(new MarkerOptions()
+                .position(sydney)
+                .title("Marker in Sydney"));
+        map.moveCamera(CameraUpdateFactory.newLatLng(sydney));
+    }
+
 
     private void replaceFragment(Fragment fragment){ //Intercambia el fragment actual por otro
         FragmentManager fragmentManager = getSupportFragmentManager();

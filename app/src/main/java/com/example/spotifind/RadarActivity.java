@@ -1,5 +1,10 @@
 package com.example.spotifind;
 
+import android.content.Context;
+import android.content.pm.PackageManager;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -7,8 +12,14 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.fragment.app.FragmentActivity;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -21,65 +32,82 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import org.json.JSONException;
 
-public class RadarActivity extends AppCompatActivity implements OnMapReadyCallback {
+import java.util.Map;
+
+public class RadarActivity extends FragmentActivity implements OnMapReadyCallback, LocationListener, GoogleMap.OnCameraMoveListener {
     private BottomNavigationView menuBar;
+    private GoogleMap mMap;
+    private LocationManager locationManager;
+    private LatLng lastKnownLatLng;
+    private static final int LOCATION_PERMISSION_REQUEST_CODE = 1001;
+
+    private ActivityResultLauncher<String[]> requestPermissionLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), new ActivityResultCallback<Map<String, Boolean>>() {
+                @Override
+                public void onActivityResult(Map<String, Boolean> result) {
+                    if (result.containsValue(false)) {
+                        // Permission denied
+                        Toast.makeText(RadarActivity.this, "Permission denied", Toast.LENGTH_SHORT).show();
+                    } else {
+                        // Permission granted
+                        Toast.makeText(RadarActivity.this, "Permission granted", Toast.LENGTH_SHORT).show();
+                        // Do something with the location
+                    }
+                }
+            });
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        getSupportActionBar().hide();
+        //getSupportActionBar().hide();
         setContentView(R.layout.activity_radar);
+
+        // Check for permission
+        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+            // Permission is not granted
+            ActivityCompat.requestPermissions(this,
+                    new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION},
+                    LOCATION_PERMISSION_REQUEST_CODE);
+        } else {
+            // Permission has already been granted
+            // Do something with the location
+            // Get the LocationManager
+            SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+                    .findFragmentById(R.id.map);
+            mapFragment.getMapAsync(this);
+
+            locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        }
+
+        // Alternatively, you can use the following code to request permission:
+        /*
+        requestPermissionLauncher.launch(new String[]{Manifest.permission.ACCESS_FINE_LOCATION});
+         */
+
         menuBar = findViewById(R.id.bottomNavigationView);
         menuBar.setSelectedItemId(R.id.radar);
-        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.map);
-        mapFragment.getMapAsync(this);
     }
 
-    /*@Override
-    protected void startMap(boolean isRestore) {
-        if (!isRestore) {
-            getMap().moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(51.503186, -0.126446), 10));
-        }*/
-
-        /*mClusterManager = new ClusterManager<>(this, getMap());
-        getMap().setOnCameraIdleListener(mClusterManager);
-
-        // Add a custom InfoWindowAdapter by setting it to the MarkerManager.Collection object from
-        // ClusterManager rather than from GoogleMap.setInfoWindowAdapter
-        mClusterManager.getMarkerCollection().setInfoWindowAdapter(new GoogleMap.InfoWindowAdapter() {
-            @Override
-            public View getInfoWindow(@NonNull Marker marker) {
-                final LayoutInflater inflater = LayoutInflater.from(ClusteringDemoActivity.this);
-                final View view = inflater.inflate(R.layout.custom_info_window, null);
-                final TextView textView = view.findViewById(R.id.textViewTitle);
-                String text = (marker.getTitle() != null) ? marker.getTitle() : "Cluster Item";
-                textView.setText(text);
-                return view;
+    // Handle the permission request response
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Permission granted
+                Toast.makeText(this, "Permission granted", Toast.LENGTH_SHORT).show();
+                // Do something with the location
+                startLocationUpdates();
+            } else {
+                // Permission denied
+                Toast.makeText(this, "Permission denied", Toast.LENGTH_SHORT).show();
+                finish();
             }
-
-            @Override
-            public View getInfoContents(@NonNull Marker marker) {
-                return null;
-            }
-        });
-        mClusterManager.setOnClusterItemInfoWindowLongClickListener(marker ->
-                Toast.makeText(ClusteringDemoActivity.this,
-                        "Info window clicked.",
-                        Toast.LENGTH_SHORT).show());
-        mClusterManager.setOnClusterItemInfoWindowLongClickListener(marker ->
-                Toast.makeText(ClusteringDemoActivity.this,
-                        "Info window long pressed.",
-                        Toast.LENGTH_SHORT).show());
-
-        try {
-            readItems();
-        } catch (JSONException e) {
-            Toast.makeText(this, "Problem reading list of markers.", Toast.LENGTH_LONG).show();
-        }*/
-    //}
+        }
+    }
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
-        GoogleMap map = googleMap;
+        /*GoogleMap map = googleMap;
 
         // Add a marker in Sydney and move the camera
         LatLng fdi = new LatLng(40.452757315351604, -3.733414742431177);
@@ -87,6 +115,56 @@ public class RadarActivity extends AppCompatActivity implements OnMapReadyCallba
                 .position(fdi)
                 .title("Marker in FDI"));
         map.setMinZoomPreference(15);
-        map.moveCamera(CameraUpdateFactory.newLatLng(fdi));
+        map.moveCamera(CameraUpdateFactory.newLatLng(fdi));*/
+
+        mMap = googleMap;
+
+        // Check for permission
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+            // Permission is not granted
+            ActivityCompat.requestPermissions(this,
+                    new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION},
+                    1);
+        } else {
+            // Permission has already been granted
+            startLocationUpdates();
+        }
+
+        // Set an OnCameraMoveListener to detect map movements
+        mMap.setOnCameraMoveListener(this);
+    }
+
+    // Start location updates
+    private void startLocationUpdates() {
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED) {
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,
+                    5000, 10, this);
+        }
+    }
+
+    @Override
+    public void onLocationChanged(Location location) {
+        // Update the last known location and move the camera to it
+        lastKnownLatLng = new LatLng(location.getLatitude(), location.getLongitude());
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(lastKnownLatLng, 16f));
+        Toast.makeText(this, "Location changed", Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void onStatusChanged(String provider, int status, Bundle extras) {}
+
+    @Override
+    public void onProviderEnabled(String provider) {}
+
+    @Override
+    public void onProviderDisabled(String provider) {}
+
+    @Override
+    public void onCameraMove() {
+        // Update the last known location when the map moves
+        lastKnownLatLng = mMap.getCameraPosition().target;
+        Toast.makeText(this, "Moving cámera", Toast.LENGTH_SHORT).show();
     }
 }

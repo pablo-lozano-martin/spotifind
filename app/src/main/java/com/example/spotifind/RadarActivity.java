@@ -1,13 +1,16 @@
 package com.example.spotifind;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -29,6 +32,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.navigation.NavigationBarView;
 
 import org.json.JSONException;
 
@@ -85,6 +89,28 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
 
         menuBar = findViewById(R.id.bottomNavigationView);
         menuBar.setSelectedItemId(R.id.radar);
+        menuBar.setOnItemSelectedListener(new NavigationBarView.OnItemSelectedListener() {
+            @Override
+            public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+                switch (item.getItemId()) {
+                    case R.id.friendlist:
+                        /*Intent intent = new Intent(RadarActivity.this, FriendListActivity.class);
+                        startActivity(intent);
+                        finish();*/
+                        Log.d("RadarActivity", "FrindList selected");
+                        break;
+                    case R.id.profile:
+                        /*Intent intent = new Intent(RadarActivity.this, ProfileActivity.class);
+                        startActivity(intent);
+                        finish();*/Log.d("RadarActivity", "Profile selected");
+                        break;
+                    default:
+                        Log.d("RadarActivity", "Radar selected");
+                        break;
+                }
+                return true;
+            }
+        });
     }
 
     // Handle the permission request response

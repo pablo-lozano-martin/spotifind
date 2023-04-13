@@ -94,10 +94,10 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
             public boolean onNavigationItemSelected(@NonNull MenuItem item) {
                 switch (item.getItemId()) {
                     case R.id.friendlist:
-                        /*Intent intent = new Intent(RadarActivity.this, FriendListActivity.class);
+                        Intent intent = new Intent(RadarActivity.this, FriendlistActivity.class);
                         startActivity(intent);
-                        finish();*/
                         Log.d("RadarActivity", "FrindList selected");
+                        finish();
                         break;
                     case R.id.profile:
                         /*Intent intent = new Intent(RadarActivity.this, ProfileActivity.class);

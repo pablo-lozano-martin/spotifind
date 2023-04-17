@@ -12,6 +12,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
+import android.view.View;
 import android.widget.Toast;
 
 import com.example.spotifind.databinding.ActivityMainBinding;
@@ -32,10 +33,12 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         getSupportActionBar().hide();
+        binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(R.layout.activity_main);
         mAuth = FirebaseAuth.getInstance();
         mFirestore = FirebaseFirestore.getInstance();
         showSplashScreen();
+
     }
 
     public void onStart() {
@@ -45,27 +48,23 @@ public class MainActivity extends AppCompatActivity {
         if(currentUser != null){
             currentUser.reload();
         }
+        else{
+            authUser();
+            showSplashScreen();
+        }
+
     }
 
     private void showSplashScreen() {
         setContentView(R.layout.splash_screen);
 
-        new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                Intent intent = new Intent(MainActivity.this, RadarActivity.class);
-                //startActivity(intent);
-                finish();
-            }
-        }, 5000); // muestra la splash screen por 5 segundos antes de cargar la actividad principal
         binding = ActivityMainBinding.inflate(getLayoutInflater());
-        setContentView(R.layout.activity_main);
+        setContentView(binding.getRoot());
+
         replaceFragment(new RadarFragment()); //Comienza con el fragment del radar al iniciar la app
 
         binding.bottomNavigationView.setOnItemSelectedListener(item -> {
-
             switch (item.getItemId()){
-
                 case R.id.friendlist:
                     replaceFragment(new FriendlistFragment());
                     break;
@@ -76,10 +75,13 @@ public class MainActivity extends AppCompatActivity {
                     replaceFragment(new ProfileFragment());
                     break;
             }
-
             return true;
         });
+
+        // Oculta la pantalla de Splash Screen cuando se haya cargado la actividad principal
+
     }
+
 
     private void replaceFragment(Fragment fragment){ //Intercambia el fragment actual por otro
         FragmentManager fragmentManager = getSupportFragmentManager();
@@ -87,4 +89,27 @@ public class MainActivity extends AppCompatActivity {
         fragmentTransaction.replace(R.id.frame_layout, fragment);
         fragmentTransaction.commit();
     }
+
+    private void authUser() {
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        if(currentUser != null){
+            currentUser.reload();
+            showSplashScreen();
+        } else {
+            Intent intent = new Intent(MainActivity.this, LoginActivity.class);
+            startActivity(intent);
+        }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        FirebaseAuth.getInstance().signOut();
+    }
+
+    protected void onDestroy() {
+        super.onDestroy();
+        FirebaseAuth.getInstance().signOut();
+    }
+
 }

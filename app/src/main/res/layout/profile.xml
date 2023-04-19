@@ -12,6 +12,7 @@
         android:layout_height="304dp"
         tools:layout_editor_absoluteX="1dp">
 
+
         <Button
             android:id="@+id/buttonSpotify"
             android:layout_width="wrap_content"
@@ -25,7 +26,8 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.018" />
 
         <ImageButton
             android:id="@+id/buttonEdit"
@@ -35,12 +37,15 @@
             android:layout_marginTop="16dp"
             android:layout_marginEnd="16dp"
             android:layout_marginBottom="245dp"
+            android:backgroundTint="@color/dark_blue"
+            app:tint="@color/white"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.765"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.0"
             app:srcCompat="@drawable/edit_icon" />
-
 
         <ImageView
             android:id="@+id/imageView2"
@@ -48,12 +53,14 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="116dp"
             android:layout_marginTop="48dp"
-            android:layout_marginEnd="117dp"
+            android:layout_marginEnd="116dp"
             android:layout_marginBottom="128dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.5"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.0"
             tools:srcCompat="@tools:sample/avatars" />
 
         <TextView
@@ -72,6 +79,24 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintVertical_bias="0.0" />
+
+        <TextView
+            android:id="@+id/textPruebaScroll"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginStart="20dp"
+            android:layout_marginTop="333dp"
+            android:layout_marginEnd="20dp"
+            android:layout_marginBottom="91dp"
+            android:text="Lorem ipsum dolor sit amet. Non blanditiis natus ab illo veniam ut voluptatem officia. At quidem dolorum ut reiciendis dolorem ut voluptas voluptatem At veritatis quod est fugiat ullam.Ut commodi maxime et inventore corrupti in necessitatibus expedita aut Quis nobis! 33 nemo minus ad praesentium impedit non odit dolor aut nostrum ipsa et recusandae quam et impedit magni. In illum dolorum sed nisi possimus et porro architecto ut delectus culpa eum minima mollitia. Aut aliquam ullam qui dolores officia et inventore architecto sit accusamus cupiditate.A architecto magnam ut cupiditate molestiae sit reprehenderit velit qui Quis dolorem. Qui libero sapiente ex quisquam porro aut voluptas saepe et totam dolor! Et suscipit inventore et explicabo sint et impedit magni eos voluptatum fugit 33 sapiente enim ab nesciunt laboriosam.
+            Lorem ipsum dolor sit amet. Est illo voluptatem non minus ipsum ut quos nihil. Qui esse eius ut accusamus nulla aut error soluta ut dolorem perspiciatis aut laudantium officiis qui quia eaque. Ea perspiciatis sequi aut autem exercitationem hic minima autem vel suscipit distinctio ea exercitationem unde hic mollitia aliquam sit eius quia? Ea molestiae nemo et molestiae consequatur aut pariatur voluptatem At tenetur facilis aut consequuntur totam! </p><p>Qui culpa iusto aut quisquam dolorum sit eligendi harum non debitis ipsa ea autem tenetur ut asperiores repellendus. Ad maxime iure aut dolorum alias At accusamus galisum eum adipisci delectus non neque explicabo? </p><p>Aut saepe placeat sed vero adipisci sed modi adipisci et atque quia. Et vero nesciunt qui dolor quis et doloribus incidunt et possimus inventore in facilis dolorem."
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="1.0"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.0" />
+
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </ScrollView>

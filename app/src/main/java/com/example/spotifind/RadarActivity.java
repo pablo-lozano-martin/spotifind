@@ -33,17 +33,22 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationBarView;
+import com.google.android.material.navigation.NavigationView;
 
 import org.json.JSONException;
 
 import java.util.Map;
 
 public class RadarActivity extends FragmentActivity implements OnMapReadyCallback, LocationListener, GoogleMap.OnCameraMoveListener {
-    private BottomNavigationView menuBar;
+    //private BottomNavigationView menuBar;
+    private BottomNavigationView navBar;
     private GoogleMap mMap;
     private LocationManager locationManager;
     private LatLng lastKnownLatLng;
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1001;
+
+    private double minLatitude, maxLatitude;
+    private double minLongitude, maxLongitude;
 
     private ActivityResultLauncher<String[]> requestPermissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), new ActivityResultCallback<Map<String, Boolean>>() {
@@ -87,7 +92,10 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
         requestPermissionLauncher.launch(new String[]{Manifest.permission.ACCESS_FINE_LOCATION});
          */
 
-        menuBar = findViewById(R.id.bottomNavigationView);
+        navBar = findViewById(R.id.navbar);
+        NavigationBarListener navigationBarListener = new NavigationBarListener(this);
+        navBar.setOnNavigationItemSelectedListener(navigationBarListener);
+        /*menuBar = findViewById(R.id.bottomNavigationView);
         menuBar.setSelectedItemId(R.id.radar);
         menuBar.setOnItemSelectedListener(new NavigationBarView.OnItemSelectedListener() {
             @Override
@@ -102,7 +110,7 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
                     case R.id.profile:
                         /*Intent intent = new Intent(RadarActivity.this, ProfileActivity.class);
                         startActivity(intent);
-                        finish();*/Log.d("RadarActivity", "Profile selected");
+                        finish();Log.d("RadarActivity", "Profile selected");
                         break;
                     default:
                         Log.d("RadarActivity", "Radar selected");
@@ -110,7 +118,7 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
                 }
                 return true;
             }
-        });
+        });*/
     }
 
     // Handle the permission request response
@@ -133,16 +141,6 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
-        /*GoogleMap map = googleMap;
-
-        // Add a marker in Sydney and move the camera
-        LatLng fdi = new LatLng(40.452757315351604, -3.733414742431177);
-        map.addMarker(new MarkerOptions()
-                .position(fdi)
-                .title("Marker in FDI"));
-        map.setMinZoomPreference(15);
-        map.moveCamera(CameraUpdateFactory.newLatLng(fdi));*/
-
         mMap = googleMap;
 
         // Check for permission
@@ -174,8 +172,19 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
     public void onLocationChanged(Location location) {
         // Update the last known location and move the camera to it
         lastKnownLatLng = new LatLng(location.getLatitude(), location.getLongitude());
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(lastKnownLatLng, 16f));
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(lastKnownLatLng, 8f));
         Toast.makeText(this, "Location changed", Toast.LENGTH_SHORT).show();
+
+        this.minLatitude = location.getLatitude() - 0.5; this.maxLatitude = location.getLatitude() + 0.5;
+        this.minLongitude = location.getLongitude() - 0.5; this.maxLongitude = location.getLongitude() + 0.5;
+        MarkerOptions markerOptions = new MarkerOptions().position(new LatLng(this.minLatitude, location.getLongitude()));
+        mMap.addMarker(markerOptions);
+        markerOptions.position(new LatLng(this.maxLatitude, location.getLongitude()));
+        mMap.addMarker(markerOptions);
+        markerOptions.position(new LatLng(location.getLatitude(), this.minLongitude));
+        mMap.addMarker(markerOptions);
+        markerOptions.position(new LatLng(location.getLatitude(), this.maxLongitude));
+        mMap.addMarker(markerOptions);
     }
 
     @Override

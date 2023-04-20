@@ -3,52 +3,37 @@ package com.example.spotifind;
 import android.location.Location;
 import android.util.Log;
 
+import com.example.spotifind.Spotify.SpotifyService;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.annotations.NotNull;
 
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import com.spotify.android.appremote.api.SpotifyAppRemote;
 import com.spotify.protocol.client.Subscription;
-import com.spotify.protocol.types.Artist;
 import com.spotify.protocol.types.PlayerState;
 import com.spotify.protocol.types.Track;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
-
-import android.util.Pair;
+import com.example.spotifind.Spotify.CustomArtist;
+import com.example.spotifind.Spotify.CustomTrack;
 
 public class LocalUser {
+    private SpotifyService artistSpotifyService=null;
+    private  SpotifyService trackSpotifyService=null;
+    private SpotifyService spotifyService;
     private String username;
     private String uid;
     private String spotitoken;
-
-    private List<Pair<String, String>> top5Artists;
+    private List<CustomArtist> top5Artists;
     private Track lastPlayedSong;
-    private List<Track> top5Songs;
-
+    private List<CustomTrack> top5Songs;
     private FirebaseUser currentUser;
 
     private SpotifyAppRemote mspotifyAppRemote;
@@ -64,8 +49,53 @@ public class LocalUser {
     // Constructor de la clase
 
     public LocalUser() {
-        friendList = new ArrayList<>();
+    }
 
+    public LocalUser(String mAccessToken, FirebaseAuth mAuth) {
+        friendList = new ArrayList<>();
+        setFirebaseCredentials(mAuth);
+        this.artistSpotifyService = new SpotifyService(MainActivity.mAccessToken, "artists", new SpotifyService.SpotifyCallback<List<CustomTrack>>() {
+            @Override
+            public void onSuccess(List<CustomTrack> result) {
+                Log.d("LocalUser","exitoactualizar");
+            }
+
+            @Override
+            public void onFailure(Throwable throwable) {
+                Log.d("LocalUser","ErrorActualizar");
+            }
+        }, new SpotifyService.SpotifyCallback<List<CustomArtist>>() {
+            @Override
+            public void onSuccess(List<CustomArtist> result) {
+                List<CustomArtist> artistPairs = new ArrayList<>();
+                for (CustomArtist artist : result) {
+                    artistPairs.add(new CustomArtist(artist.getId(), artist.getName()));
+                }
+                setTop5Artists(artistPairs);
+                Log.d("LocalUser", "Top 5 artists updated: " + artistPairs);
+            }
+
+            @Override
+            public void onFailure(Throwable throwable) {
+                Log.e("LocalUser", "Error al obtener los Top Artistas", throwable);
+            }
+        });
+
+        artistSpotifyService.execute();
+        this.trackSpotifyService = new SpotifyService(MainActivity.mAccessToken, "tracks", new SpotifyService.SpotifyCallback<List<CustomTrack>>() {
+            @Override
+            public void onSuccess(List<CustomTrack> result) {
+                setTop5Songs(result);
+                Log.d("LocalUser", "Top 5 songs updated: " + result);
+            }
+
+            @Override
+            public void onFailure(Throwable throwable) {
+                Log.e("LocalUser", "Error al obtener los Top Tracks", throwable);
+            }
+        });
+
+        trackSpotifyService.execute();
     }
 
 
@@ -98,12 +128,12 @@ public class LocalUser {
         this.uid = uid;
     }
 
-    public void setLocation(Location location){
-        this.location=location;
+    public void setLocation(Location location) {
+        this.location = location;
         updateLocation(this.location);
     }
 
-    public Location getLocation(Location location){
+    public Location getLocation(Location location) {
         return this.location;
     }
 
@@ -114,37 +144,41 @@ public class LocalUser {
     public Track getLastPlayedSong() {
         return lastPlayedSong;
     }
-    public void setSpotitoken(String token) {
-        this.spotitoken=token;
-    }
 
     public void setLastPlayedSong(Track lastPlayedSong) {
         this.lastPlayedSong = lastPlayedSong;
         // Get DatabaseReference for user's object in Firebase
         DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference("users").child(this.getUid());
-
         // Update last played song in Firebase
         databaseRef.child("lastPlayedSong").setValue(lastPlayedSong);
         Log.d("LocalUser", "Last played song updated in Firebase");
     }
 
-    public List<Track> getTop5Songs() {
+    public List<CustomTrack> getTop5Songs() {
         return top5Songs;
     }
 
-    public void setTop5Songs(List<Track> top5Songs) {
+    public void setTop5Songs(List<CustomTrack> top5Songs) {
         this.top5Songs = top5Songs;
+        DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference("users").child(this.getUid());
+        // Update last played song in Firebase
+        databaseRef.child("Top5Songs").setValue(top5Songs);
+        Log.d("LocalUser", "Top5Songs updated in Firebase");
     }
 
-    public List<Pair<String, String>> getTop5Artists() {
+    public List<CustomArtist> getTop5Artists() {
         return top5Artists;
     }
 
-    public void setTop5Artists(List<Pair<String, String>> top5Artist) {
-        this.top5Artists = top5Artist;
-        saveToFirebase(this.uid);
-
+    public void setTop5Artists(List<CustomArtist> top5Artists) {
+        this.top5Artists = top5Artists;
+        DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference("users").child(this.getUid());
+        // Update last played song in Firebase
+        databaseRef.child("Top5Artists").setValue(top5Artists);
+        Log.d("LocalUser", "Top5Artists updated in Firebase");
     }
+
+
 
     // Save user data to Firebase Realtime Database
     public void saveToFirebase(String userId) {
@@ -155,7 +189,7 @@ public class LocalUser {
     }
 
     public void setFirebaseCredentials(FirebaseAuth mAuth) {
-        currentUser= FirebaseAuth.getInstance().getCurrentUser();
+        currentUser = FirebaseAuth.getInstance().getCurrentUser();
         this.email = currentUser.getEmail();
         this.uid = currentUser.getUid();
         //save for first time
@@ -174,67 +208,13 @@ public class LocalUser {
                                 .artist.name);
                         // Set last played song
                         setLastPlayedSong(track);
-                        // Update user's top 5 songs
-                        updateTop5Songs(track);
                     }
+
                 });
     }
 
-
-    private <TrackSimplified> void updateTop5Songs(Track track) {
-        // Get current top 5 songs
-        List<Track> currentTop5Songs = getTop5Songs();
-        // If user has no top 5 songs yet, initialize the list
-        if (currentTop5Songs == null) {
-            currentTop5Songs = new ArrayList<>();
-        }
-        // Add the newly played song to the list
-        currentTop5Songs.add(track);
-        // Keep only the top 5 songs
-        currentTop5Songs = currentTop5Songs.subList(0, Math.min(currentTop5Songs.size(), 5));
-        // Set the updated top 5 songs list
-        setTop5Songs(currentTop5Songs);
-    }
-
-    public void updateTop5Artists() {
-        // Use OkHttp library to make HTTP request to Spotify API
-        OkHttpClient client = new OkHttpClient();
-        Request request = new Request.Builder()
-                .url("https://api.spotify.com/v1/me/top/artists?time_range=short_term&limit=5")
-                .addHeader("Authorization", "Bearer " + getSpotitoken())
-                .build();
-        client.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                e.printStackTrace();
-            }
-
-            @Override
-            public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-                if (response.isSuccessful()) {
-                    // Parse response body to get top 5 artists
-                    try {
-                        JSONObject json = new JSONObject(response.body().string());
-                        JSONArray items = json.getJSONArray("items");
-                        List<Pair<String, String>> topArtists = new ArrayList<>();
-                        for (int i = 0; i < items.length(); i++) {
-                            JSONObject artistObj = items.getJSONObject(i);
-                            String name = artistObj.getString("name");
-                            String imageUrl = artistObj.getJSONArray("images").getJSONObject(2).getString("url");
-                            topArtists.add(new Pair<>(name, imageUrl));
-                        }
-                        // Set updated top 5 artists list
-                        setTop5Artists(topArtists);
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        });
-    }
-
     public void setSpoifyAppRemote(SpotifyAppRemote mSpotifyAppRemote) {
-        mspotifyAppRemote=mSpotifyAppRemote;
+        mspotifyAppRemote = mSpotifyAppRemote;
         updateCurrentSong();
     }
 
@@ -259,6 +239,7 @@ public class LocalUser {
         });
     }
 
+
     // Escuchar los cambios de ubicación del usuario y actualizar la interfaz de usuario
     public void listenForLocationChanges(ValueEventListener listener) {
         DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference("users").child(uid);
@@ -270,6 +251,8 @@ public class LocalUser {
         DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference("users").child(uid);
         //databaseRef.child("latitude").setValue(location.getLatitude());
         //databaseRef.child("longitude").setValue(location.getLongitude());
-        Log.d("LocalUser", "Location " +location);
+        Log.d("LocalUser", "Location " + location);
     }
+
+
 }

@@ -62,7 +62,7 @@ public class FriendlistAdapter extends RecyclerView.Adapter<FriendlistAdapter.Fr
 
     @Override
     public void onBindViewHolder(FriendlistViewHolder holder, int position) {
-        holder.name.setText(this.friendlist.get(position).getUsername());
+        holder.name.setText(this.friendlist.get(position).get_username());
         holder.profileButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {

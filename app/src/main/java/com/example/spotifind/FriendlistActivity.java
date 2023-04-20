@@ -48,6 +48,6 @@ public class FriendlistActivity extends AppCompatActivity implements FriendlistA
     @Override
     public void profile(int position) {
         friendlist.get(position);//TODO .viewProfile O ir a la actividad profile con los datos de este user
-        Log.d("FrienlistActivity", "Se vería el perfil de " + friendlist.get(position).getUsername());
+        Log.d("FrienlistActivity", "Se vería el perfil de " + friendlist.get(position).get_username());
     }
 }

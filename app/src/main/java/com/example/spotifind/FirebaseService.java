@@ -30,8 +30,6 @@ public class FirebaseService {
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 // Actualizar la información del usuario y de su música en tiempo real
                 user = snapshot.getValue(LocalUser.class);
-                List<Track> songs = snapshot.child("songs").getValue(new GenericTypeIndicator<List<Track>>() {});
-                // Aquí puedes hacer lo que necesites con la información actualizada
             }
 
             @Override

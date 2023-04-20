@@ -65,6 +65,7 @@ public class LocalUser {
 
     public LocalUser() {
         friendList = new ArrayList<>();
+
     }
 
 
@@ -99,6 +100,7 @@ public class LocalUser {
 
     public void setLocation(Location location){
         this.location=location;
+        updateLocation(this.location);
     }
 
     public Location getLocation(Location location){
@@ -140,6 +142,8 @@ public class LocalUser {
 
     public void setTop5Artists(List<Pair<String, String>> top5Artist) {
         this.top5Artists = top5Artist;
+        saveToFirebase(this.uid);
+
     }
 
     // Save user data to Firebase Realtime Database
@@ -264,8 +268,8 @@ public class LocalUser {
     // Actualizar la ubicación del usuario en tiempo real en Firebase Realtime Database
     public void updateLocation(Location location) {
         DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference("users").child(uid);
-        databaseRef.child("latitude").setValue(location.getLatitude());
-        databaseRef.child("longitude").setValue(location.getLongitude());
-        Log.d("LocalUser", "Location updated in Firebase");
+        //databaseRef.child("latitude").setValue(location.getLatitude());
+        //databaseRef.child("longitude").setValue(location.getLongitude());
+        Log.d("LocalUser", "Location " +location);
     }
 }

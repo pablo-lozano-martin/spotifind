@@ -1,18 +1,15 @@
-package com.example.spotifind;
-
 import static com.spotify.sdk.android.auth.LoginActivity.REQUEST_CODE;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
 import android.content.Intent;
-import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
 
+import com.example.spotifind.FirebaseService;
 import com.example.spotifind.FriendlistFragment;
 import com.example.spotifind.LocalUser;
 import com.example.spotifind.ProfileFragment;
@@ -21,11 +18,6 @@ import com.example.spotifind.RadarFragment;
 import com.example.spotifind.databinding.ActivityMainBinding;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import com.spotify.android.appremote.api.ConnectionParams;
@@ -47,7 +39,7 @@ public class MainActivity extends AppCompatActivity {
     ActivityMainBinding binding;
     private FirebaseAuth mAuth;
 
-    private  FirebaseService firebaseService;
+    private FirebaseService firebaseService;
 
     private static final String CLIENT_ID = "824f2fd7d9d14c38a7945ba2f7bb9c60";
     private static final String SECRET_CLIENT_ID = "3d1d551e6f0b4bd8b98aedf17d75f426";
@@ -56,8 +48,6 @@ public class MainActivity extends AppCompatActivity {
     private String mAccessToken;
 
     public LocalUser localUser;
-
-    private ValueEventListener locationListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,15 +68,15 @@ public class MainActivity extends AppCompatActivity {
             localUser.setFirebaseCredentials(mAuth);
         }
 
+        // Se llama al método startAuth() para iniciar el proceso de autenticación de Spotify
+        authUser();
 
         //background service which listens to PlayerState when the song change
         if (localUser != null) {
             firebaseService.startRealtimeUpdates(localUser.getUid());
-            startAuth();
-            setLocationListener();
         }
 
-
+        showSplashScreen();
     }
 
     public void onStart() {
@@ -118,14 +108,16 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void authUser() {
-        // Se crea una instancia de AuthorizationRequest con los datos de nuestra aplicación y la URI de redireccionamiento
+            // Se crea una instancia de AuthorizationRequest con los datos de nuestra aplicación y la URI de redireccionamiento
         AuthorizationRequest.Builder builder = new AuthorizationRequest.Builder(
                 CLIENT_ID,
                 AuthorizationResponse.Type.TOKEN,
                 REDIRECT_URI
         );
         builder.setScopes(new String[]{"user-read-private", "playlist-read", "user-library-read", "user-read-currently-playing", "user-read-playback-state", "user-modify-playback-state"});
-        AuthorizationRequest request = builder.build(); // Se llama al método AuthorizationClient.openLoginActivity() para iniciar la actividad de autenticación de Spotify
+        AuthorizationRequest request = builder.build();
+
+        // Se llama al método AuthorizationClient.openLoginActivity() para iniciar la actividad de autenticación de Spotify
         AuthorizationClient.openLoginActivity(this, REQUEST_CODE, request);
     }
 
@@ -142,7 +134,6 @@ public class MainActivity extends AppCompatActivity {
                 // Se crea una instancia de ConnectionParams con el token de acceso y la URI de redireccionamiento
                 ConnectionParams connectionParams = new ConnectionParams.Builder(CLIENT_ID)
                         .setRedirectUri(REDIRECT_URI)
-                        .showAuthView(true)
                         .build();
 
                 // Se conecta con la API de Spotify mediante la clase SpotifyAppRemote y se almacena en una variable
@@ -152,6 +143,7 @@ public class MainActivity extends AppCompatActivity {
                     public void onConnected(SpotifyAppRemote spotifyAppRemote) {
                         mSpotifyAppRemote = spotifyAppRemote;
                         localUser.setSpoifyAppRemote(mSpotifyAppRemote);
+                        localUser.setSpotitoken(mAccessToken);
                         Log.d("MainActivity", "Connected! Yay!");
 
                         // Se suscribe al evento PlayerState para obtener información sobre el estado del reproductor de Spotify
@@ -161,7 +153,6 @@ public class MainActivity extends AppCompatActivity {
                                 // Se actualiza la vista con la información del estado del reproductor
                                 //binding.currentSongTitle.setText(track.name);
                                 //binding.currentSongArtist.setText(track.artist.name);
-                                localUser.setLastPlayedSong(track);
                             }
                         });
                     }
@@ -173,16 +164,6 @@ public class MainActivity extends AppCompatActivity {
                 });
             }
         }
-    }
-
-    private void startAuth() {
-        AuthorizationRequest.Builder builder =
-                new AuthorizationRequest.Builder(CLIENT_ID, AuthorizationResponse.Type.TOKEN, REDIRECT_URI);
-
-        builder.setScopes(new String[]{"user-read-private", "playlist-read", "playlist-read-private"});
-        AuthorizationRequest request = builder.build();
-
-        AuthorizationClient.openLoginActivity(this, REQUEST_CODE, request);
     }
 
     private void showSplashScreen() {
@@ -219,37 +200,8 @@ public class MainActivity extends AppCompatActivity {
         fragmentTransaction.commit();
     }
 
-
     @Override
     public void onBackPressed() {
         // No se permite volver atrás en la actividad principal
     }
-
-    private void setLocationListener(){
-
-        locationListener = new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                Location location = snapshot.getValue(Location.class);
-                localUser.setLocation(location);
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                Log.e("MainActivity", "Error al obtener la ubicación del usuario: " + error.getMessage());
-            }
-        };
-
-        // Obtener una referencia a la base de datos de Firebase
-        FirebaseDatabase database = FirebaseDatabase.getInstance();
-
-        // Obtener una referencia a la ubicación del usuario en la base de datos
-        DatabaseReference userLocationRef = database.getReference("users/" + localUser.getUid() + "/location");
-
-        // Establecer el listener para la ubicación del usuario
-        userLocationRef.addValueEventListener(locationListener);
-        showSplashScreen();
-    }
-
-
 }

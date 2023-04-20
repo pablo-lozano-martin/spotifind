@@ -93,9 +93,32 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
          */
 
         navBar = findViewById(R.id.navbar);
-        navBar.setSelectedItemId(R.id.radar);
         NavigationBarListener navigationBarListener = new NavigationBarListener(this);
         navBar.setOnNavigationItemSelectedListener(navigationBarListener);
+        /*menuBar = findViewById(R.id.bottomNavigationView);
+        menuBar.setSelectedItemId(R.id.radar);
+        menuBar.setOnItemSelectedListener(new NavigationBarView.OnItemSelectedListener() {
+            @Override
+            public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+                switch (item.getItemId()) {
+                    case R.id.friendlist:
+                        Intent intent = new Intent(RadarActivity.this, FriendlistActivity.class);
+                        startActivity(intent);
+                        Log.d("RadarActivity", "FrindList selected");
+                        finish();
+                        break;
+                    case R.id.profile:
+                        /*Intent intent = new Intent(RadarActivity.this, ProfileActivity.class);
+                        startActivity(intent);
+                        finish();Log.d("RadarActivity", "Profile selected");
+                        break;
+                    default:
+                        Log.d("RadarActivity", "Radar selected");
+                        break;
+                }
+                return true;
+            }
+        });*/
     }
 
     // Handle the permission request response
@@ -134,11 +157,6 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
 
         // Set an OnCameraMoveListener to detect map movements
         mMap.setOnCameraMoveListener(this);
-        findUsers();
-    }
-
-    private void findUsers(){
-        
     }
 
     // Start location updates

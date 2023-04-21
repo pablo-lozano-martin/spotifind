@@ -79,7 +79,7 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_marginStart="20dp"
-            android:layout_marginTop="333dp"
+            android:layout_marginTop="310dp"
             android:layout_marginEnd="20dp"
             android:layout_marginBottom="91dp"
             android:text="Top 5 Artists"
@@ -90,18 +90,18 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintVertical_bias="0.0" />
-
-        <CardView
+        
+        <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:cardElevation="4dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
             tools:layout_editor_absoluteX="1dp"
-            tools:layout_editor_absoluteY="422dp"
-            app:cardUseCompatPadding="true">
+            tools:layout_editor_absoluteY="401dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="93dp"
                 android:orientation="horizontal"
                 android:padding="16dp">
 
@@ -117,10 +117,11 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:gravity="center_vertical"
-                    android:textSize="18sp" />
-
+                    android:text="Artista 1"
+                    android:textSize="18dp" />
             </LinearLayout>
-        </CardView>
+
+        </androidx.cardview.widget.CardView>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </ScrollView>

@@ -11,23 +11,16 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 
-import com.example.spotifind.FirebaseService;
-import com.example.spotifind.FriendlistFragment;
-import com.example.spotifind.LocalUser;
-import com.example.spotifind.ProfileFragment;
-import com.example.spotifind.R;
-import com.example.spotifind.RadarFragment;
+import com.example.spotifind.Autentication.LoginActivity;
+import com.example.spotifind.firebase.FirebaseService;
 import com.example.spotifind.databinding.ActivityMainBinding;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.firestore.FirebaseFirestore;
 
 import com.spotify.android.appremote.api.ConnectionParams;
 import com.spotify.android.appremote.api.Connector;
 import com.spotify.android.appremote.api.SpotifyAppRemote;
 
-import com.spotify.protocol.client.Subscription;
-import com.spotify.protocol.types.PlayerState;
 import com.spotify.protocol.types.Track;
 
 import com.spotify.sdk.android.auth.AuthorizationClient;
@@ -35,7 +28,6 @@ import com.spotify.sdk.android.auth.AuthorizationRequest;
 import com.spotify.sdk.android.auth.AuthorizationResponse;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -161,7 +153,6 @@ public class MainActivity extends AppCompatActivity {
                         mSpotifyAppRemote.getPlayerApi().subscribeToPlayerState().setEventCallback(playerState -> {
                             final Track track = playerState.track;
                             if (track != null) {
-                                // Se actualiza la vista con la información del estado del reproductor
                                 //binding.currentSongTitle.setText(track.name);
                                 //binding.currentSongArtist.setText(track.artist.name);
                             }
@@ -192,6 +183,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void initializeLocalUser() {
         localUser = new LocalUser(MainActivity.mAccessToken,mAuth);
+        localUser.setSpoifyAppRemote(mSpotifyAppRemote);
         // Llama a los métodos que requieren el token de acceso para inicializar los datos del usuario
     }
 }

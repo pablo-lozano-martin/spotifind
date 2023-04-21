@@ -6,8 +6,11 @@ public class CustomArtist{
     private String id;
     private String name;
 
-    public CustomArtist(String id, String name) {
+    private String imageUrl;
 
+    public CustomArtist() {
+    }
+    public CustomArtist(String id, String name) {
         this.id = id;
         this.name = name;
     }
@@ -27,5 +30,14 @@ public class CustomArtist{
 
     public void setName(String name) {
         this.name = name;
+    }
+
+
+    public void setImageUrl(String s) {
+        this.imageUrl=s;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
     }
 }

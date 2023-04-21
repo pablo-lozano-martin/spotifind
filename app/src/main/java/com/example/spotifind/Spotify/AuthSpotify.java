@@ -1,4 +1,4 @@
-package com.example.spotifind;
+package com.example.spotifind.Spotify;
 
 import android.content.Context;
 import android.content.SharedPreferences;

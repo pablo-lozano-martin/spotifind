@@ -5,6 +5,12 @@ public class CustomTrack {
     private String name;
     private String uri;
 
+    private String imageUrl;
+
+
+    public CustomTrack(){
+
+    }
     public CustomTrack(String id, String name, String uri) {
         this.id = id;
         this.name = name;
@@ -33,5 +39,13 @@ public class CustomTrack {
 
     public void setUri(String uri) {
         this.uri = uri;
+    }
+
+    public void setAlbumImageUrl(String s) {
+        this.imageUrl=s;
+    }
+
+    public String getImageUrl() {
+        return this.imageUrl;
     }
 }

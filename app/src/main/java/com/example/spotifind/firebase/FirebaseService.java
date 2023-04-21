@@ -1,9 +1,10 @@
-package com.example.spotifind;
+package com.example.spotifind.firebase;
 
 import android.util.Log;
 
 import androidx.annotation.NonNull;
 
+import com.example.spotifind.LocalUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;

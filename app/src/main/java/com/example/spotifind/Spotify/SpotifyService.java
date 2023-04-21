@@ -32,19 +32,13 @@ public class SpotifyService extends AsyncTask<Void, Void, List<CustomTrack>> {
         void onFailure(Throwable throwable);
     }
 
-    public SpotifyService(String accessToken, String queryType, SpotifyCallback<List<CustomTrack>> callback) {
-        Log.d("SpotifyService", "Requesting Top " + MainActivity.mAccessToken);
-        this.queryType = queryType;
-        this.callback = callback;
-        this.artistCallback = null;
-        Gson gson = new Gson();
-    }
-
     public SpotifyService(String accessToken, String queryType, SpotifyCallback<List<CustomTrack>> callback, SpotifyCallback<List<CustomArtist>> artistCallback) {
         this.queryType = queryType;
         this.callback = callback;
         this.artistCallback = artistCallback;
+        gson = new Gson();
     }
+
 
     @Override
     protected List<CustomTrack> doInBackground(Void... voids) {
@@ -104,15 +98,18 @@ public class SpotifyService extends AsyncTask<Void, Void, List<CustomTrack>> {
     @Override
     protected void onPostExecute(List<CustomTrack> customTracks) {
         if (customTracks != null) {
-            callback.onSuccess(customTracks);
+            if (callback != null) {
+                callback.onSuccess(customTracks);
+            }
         } else {
-            callback.onFailure(new Exception("Error al obtener los Top " + queryType));
+            if (artistCallback != null) {
+                artistCallback.onFailure(new Exception("Error al obtener los Top " + queryType));
+            }
             Log.d("SpotifyService", "Requesting Top " + MainActivity.mAccessToken);
-
         }
     }
 
-    private static class TrackResponse {
+    public static class TrackResponse {
         @SerializedName("items")
         private List<Track> items;
 
@@ -125,7 +122,7 @@ public class SpotifyService extends AsyncTask<Void, Void, List<CustomTrack>> {
         }
     }
 
-    private static class ArtistResponse {
+    public static class ArtistResponse {
         @SerializedName("items")
         private List<Artist> items;
 

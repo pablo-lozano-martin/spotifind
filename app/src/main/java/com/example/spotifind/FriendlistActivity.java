@@ -13,12 +13,15 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 
+import com.google.android.material.bottomnavigation.BottomNavigationView;
+
 import java.io.File;
 import java.util.ArrayList;
 
 public class FriendlistActivity extends AppCompatActivity implements FriendlistAdapter.OnItemClickListener {
 
     private RecyclerView friendlistRecyclerView;
+    private BottomNavigationView navBar;
     private FriendlistAdapter adapter;
     private ArrayList<User> friendlist;
 
@@ -36,13 +39,18 @@ public class FriendlistActivity extends AppCompatActivity implements FriendlistA
         this.friendlist = new ArrayList<User>();
     }
 
-    private void setInterface(){
+    private void setInterface() {
         //Recycler view config
         this.friendlistRecyclerView = findViewById(R.id.friendlist_recyclerview);
         this.adapter = new FriendlistAdapter(this, this.friendlist);
         this.adapter.setOnItemClickListener(this);
         this.friendlistRecyclerView.setAdapter(this.adapter);
         this.friendlistRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+        navBar = findViewById(R.id.navbar);
+        navBar.setSelectedItemId(R.id.friendlist);
+        NavigationBarListener navigationBarListener = new NavigationBarListener(this);
+        navBar.setOnNavigationItemSelectedListener(navigationBarListener);
     }
 
     @Override

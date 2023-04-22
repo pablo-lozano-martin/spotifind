@@ -1,12 +1,12 @@
 package com.example.spotifind;
 
-public class User {
+public class LocalUser {
 
     private int _id;
     private String _username;
     private String _password;
 
-    public User(int id, String username, String password){
+    public LocalUser(int id, String username, String password){
         _id = id;
         _username = username;
         _password = password;

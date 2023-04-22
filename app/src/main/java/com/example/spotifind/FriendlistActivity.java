@@ -1,26 +1,19 @@
 package com.example.spotifind;
 
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.content.Context;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
 
-import java.io.File;
 import java.util.ArrayList;
 
 public class FriendlistActivity extends AppCompatActivity implements FriendlistAdapter.OnItemClickListener {
 
     private RecyclerView friendlistRecyclerView;
     private FriendlistAdapter adapter;
-    private ArrayList<User> friendlist;
+    private ArrayList<LocalUser> friendlist;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,7 +26,7 @@ public class FriendlistActivity extends AppCompatActivity implements FriendlistA
 
     private void setfriendlist(){
         //TODO set the friendlist
-        this.friendlist = new ArrayList<User>();
+        this.friendlist = new ArrayList<LocalUser>();
     }
 
     private void setInterface(){

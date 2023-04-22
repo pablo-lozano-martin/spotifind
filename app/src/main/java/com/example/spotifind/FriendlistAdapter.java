@@ -9,7 +9,6 @@ import android.widget.TextView;
 
 import androidx.recyclerview.widget.RecyclerView;
 
-import java.io.File;
 import java.util.ArrayList;
 
 public class FriendlistAdapter extends RecyclerView.Adapter<FriendlistAdapter.FriendlistViewHolder> {
@@ -46,10 +45,10 @@ public class FriendlistAdapter extends RecyclerView.Adapter<FriendlistAdapter.Fr
     }
 
 
-    private ArrayList<User> friendlist;
+    private ArrayList<LocalUser> friendlist;
     private LayoutInflater inflater;
 
-    public FriendlistAdapter(Context context, ArrayList<User> friendlist) {
+    public FriendlistAdapter(Context context, ArrayList<LocalUser> friendlist) {
         this.inflater = LayoutInflater.from(context);
         this.friendlist = friendlist;
     }

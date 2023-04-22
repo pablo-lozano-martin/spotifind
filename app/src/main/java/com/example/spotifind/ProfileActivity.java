@@ -9,6 +9,11 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class ProfileActivity extends AppCompatActivity {
 
@@ -19,6 +24,9 @@ public class ProfileActivity extends AppCompatActivity {
     private ImageButton editButton;
     private Button spotifyButton;
 
+    private RecyclerView recyclerViewTop5Artists;
+    private ArtistAdapter artistAdapter;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,17 +34,30 @@ public class ProfileActivity extends AppCompatActivity {
         setContentView(R.layout.profile);
 
         textNickname = findViewById(R.id.textNickname);
-        artistName = findViewById(R.id.artistName);
+        //artistName = findViewById(R.id.artistName);
         userImage = findViewById(R.id.userImage);
-        artistImage = findViewById(R.id.artistImage);
+        //artistImage = findViewById(R.id.artistImage);
         editButton = findViewById(R.id.buttonEdit);
         spotifyButton = findViewById(R.id.buttonSpotify);
+        recyclerViewTop5Artists = findViewById(R.id.recyclerViewTop5Artists);
 
 
         textNickname.setText("Nombre usuario"); // COGER INFO DEL USUARIO DE LA CLASE USER
         artistName.setText("Nombre artista"); // INFO DE FIREBASE??
         //userImage.setImageResource(R.drawable.imagen_usurio);
         //artistImage.setImageResource(R.drawable.imagen_artista);
+
+
+        artistAdapter = new ArtistAdapter(); // crea una instancia de ArtistAdapter
+
+        // Configurar RecyclerView
+        recyclerViewTop5Artists.setLayoutManager(new LinearLayoutManager(this));
+        recyclerViewTop5Artists.setAdapter(artistAdapter);
+
+        // Agregar datos al adapter
+        List<Artist> artistList = new ArrayList<>();
+        // Agregar artistas a la lista
+        artistAdapter.setArtistList(artistList);
 
         //listener botón editar el perfil
         editButton.setOnClickListener(new View.OnClickListener() {
@@ -53,7 +74,5 @@ public class ProfileActivity extends AppCompatActivity {
                // REDIRIGIR A SPOTI
             }
         });
-
-
     }
 }

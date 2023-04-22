@@ -2,4 +2,6 @@
     <string name="app_name">Spotifind</string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="prompt_email">example@mail.com</string>
+    <string name="prompt_password">examplepassword</string>
 </resources>

@@ -1,5 +1,6 @@
 package com.example.spotifind;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
     import android.view.LayoutInflater;
     import android.view.View;
@@ -14,7 +15,12 @@ import android.content.Context;
     import com.example.spotifind.Spotify.CustomTrack;
     import com.bumptech.glide.Glide;
 
-    import com.spotify.protocol.types.Item;
+    import android.content.ActivityNotFoundException;
+    import android.content.Intent;
+    import android.net.Uri;
+    import android.view.View;
+    import android.widget.Toast;
+
 
     import java.util.List;
 
@@ -38,22 +44,35 @@ import android.content.Context;
         }
 
         @Override
-        public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+        public void onBindViewHolder(@NonNull ViewHolder holder, @SuppressLint("RecyclerView") int position) {
+            String spotifyUri = "";
+
             if (customArtistsList != null) {
                 CustomArtist customArtist = customArtistsList.get(position);
                 holder.textView.setText(customArtist.getName());
                 Glide.with(context).load(customArtist.getImageUrl()).into(holder.imageView);
-                holder.itemView.setOnClickListener(v -> {
-                    // implementa aquí la acción al hacer click en el item de artista
-                });
+                spotifyUri = customArtist.getUri(); // Obtén el URI del artista
             } else if (customTracksList != null) {
                 CustomTrack customTrack = customTracksList.get(position);
                 holder.textView.setText(customTrack.getName());
                 Glide.with(context).load(customTrack.getImageUrl()).into(holder.imageView);
-                holder.itemView.setOnClickListener(v -> {
-                    // implementa aquí la acción al hacer click en el item de canción
-                });
+                spotifyUri = customTrack.getUri(); // Obtén el URI de la canción
             }
+
+            String finalSpotifyUri = spotifyUri;
+            holder.itemView.setOnClickListener(v -> {
+                if (!finalSpotifyUri.isEmpty()) {
+                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(finalSpotifyUri));
+                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    intent.setPackage("com.spotify.music");
+
+                    try {
+                        context.startActivity(intent);
+                    } catch (ActivityNotFoundException e) {
+                        Toast.makeText(context, "Spotify no está instalado en este dispositivo.", Toast.LENGTH_SHORT).show();
+                    }
+                }
+            });
         }
 
         @Override

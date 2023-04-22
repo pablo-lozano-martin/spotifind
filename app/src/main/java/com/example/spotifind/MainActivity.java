@@ -182,7 +182,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initializeLocalUser() {
-        localUser = new LocalUser(MainActivity.mAccessToken,mAuth);
+        localUser = new LocalUser(this,MainActivity.mAccessToken,mAuth);
         localUser.setSpoifyAppRemote(mSpotifyAppRemote);
         // Llama a los métodos que requieren el token de acceso para inicializar los datos del usuario
     }

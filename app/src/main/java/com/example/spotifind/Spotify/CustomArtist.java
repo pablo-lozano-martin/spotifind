@@ -40,4 +40,9 @@ public class CustomArtist{
     public String getImageUrl() {
         return imageUrl;
     }
+
+    public String getUri() {
+        return "spotify:artist:" + id;
+    }
+
 }

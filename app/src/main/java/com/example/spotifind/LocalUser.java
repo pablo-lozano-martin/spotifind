@@ -2,21 +2,21 @@ package com.example.spotifind;
 
 import java.util.ArrayList;
 
-public class User {
+public class LocalUser {
 
     private int _id;
     private String _username;
     private String _password;
-    private ArrayList<User> friendlist;
+    private ArrayList<LocalUser> friendlist;
 
-    public User(int id, String username, String password){
+    public LocalUser(int id, String username, String password){
         _id = id;
         _username = username;
         _password = password;
-        this.friendlist = new ArrayList<User>();
+        this.friendlist = new ArrayList<LocalUser>();
     }
 
-    public User(int id, String username, String password, ArrayList<User> fl){
+    public LocalUser(int id, String username, String password, ArrayList<LocalUser> fl){
         _id = id;
         _username = username;
         _password = password;
@@ -47,11 +47,11 @@ public class User {
         this._password = _password;
     }
 
-    public ArrayList<User> getFriendlist() {
+    public ArrayList<LocalUser> getFriendlist() {
         return friendlist;
     }
 
-    public void setFriendlist(ArrayList<User> friendlist) {
+    public void setFriendlist(ArrayList<LocalUser> friendlist) {
         this.friendlist = friendlist;
     }
 }

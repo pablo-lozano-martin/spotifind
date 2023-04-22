@@ -1,4 +1,4 @@
-package com.example.spotifind;
+package com.example.spotifind.friendlist;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -8,6 +8,9 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.example.spotifind.LocalUser;
+import com.example.spotifind.R;
 
 import java.util.ArrayList;
 
@@ -61,7 +64,7 @@ public class FriendlistAdapter extends RecyclerView.Adapter<FriendlistAdapter.Fr
 
     @Override
     public void onBindViewHolder(FriendlistViewHolder holder, int position) {
-        holder.name.setText(this.friendlist.get(position).get_username());
+        holder.name.setText(this.friendlist.get(position).getUsername());
         holder.profileButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {

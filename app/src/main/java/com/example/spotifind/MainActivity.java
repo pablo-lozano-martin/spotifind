@@ -9,11 +9,13 @@ import androidx.fragment.app.FragmentTransaction;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 
 import com.example.spotifind.Autentication.LoginActivity;
 import com.example.spotifind.firebase.FirebaseService;
 import com.example.spotifind.databinding.ActivityMainBinding;
+import com.example.spotifind.radar.RadarActivity;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
@@ -49,35 +51,42 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mAuth = FirebaseAuth.getInstance();
+        firebaseService= new FirebaseService();
         getSupportActionBar().hide();
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(R.layout.activity_main);
-        mAuth = FirebaseAuth.getInstance();
-        firebaseService= new FirebaseService();
     }
 
     public void onStart() {
         super.onStart();
+        mAuth = FirebaseAuth.getInstance();
+        firebaseService= new FirebaseService();
         FirebaseUser currentUser = mAuth.getCurrentUser();
         if(currentUser != null){
             currentUser.reload();
-            showSplashScreen();
         } else {
             Intent intent = new Intent(MainActivity.this, LoginActivity.class);
             startActivity(intent);
         }
         authUser();
-        showSplashScreen();
     }
 
-    private void showSplashScreen() {
+    private void showSplashScreen(LocalUser localUser) {
         setContentView(R.layout.splash_screen);
 
-        binding = ActivityMainBinding.inflate(getLayoutInflater());
-        setContentView(binding.getRoot());
-
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                Intent intent = new Intent(MainActivity.this, RadarActivity.class);
+                intent.putExtra("user_id", localUser.getUid());
+                startActivity(intent);
+                finish();
+            }
+        }, 1000); // muestra la splash screen por 5 segundos antes de cargar la actividad principal
+        /*binding = ActivityMainBinding.inflate(getLayoutInflater());
+        setContentView(R.layout.activity_main);
         replaceFragment(new RadarFragment()); //Comienza con el fragment del radar al iniciar la app
-
         binding.bottomNavigationView.setOnItemSelectedListener(item -> {
             switch (item.getItemId()){
                 case R.id.friendlist:
@@ -91,10 +100,7 @@ public class MainActivity extends AppCompatActivity {
                     break;
             }
             return true;
-        });
-
-        // Oculta la pantalla de Splash Screen cuando se haya cargado la actividad principal
-
+        });*/
     }
 
 
@@ -182,8 +188,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initializeLocalUser() {
-        localUser = new LocalUser(this,MainActivity.mAccessToken,mAuth);
+        localUser = new LocalUser(this,mAuth);
         localUser.setSpoifyAppRemote(mSpotifyAppRemote);
+        showSplashScreen(localUser);
         // Llama a los métodos que requieren el token de acceso para inicializar los datos del usuario
     }
 }

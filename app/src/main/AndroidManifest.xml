@@ -20,7 +20,7 @@
         android:theme="@style/Theme.Spotifind"
         tools:targetApi="31">
         <activity
-            android:name=".FriendlistActivity"
+            android:name=".friendlist.FriendlistActivity"
             android:exported="false" />
 
         <meta-data
@@ -32,8 +32,14 @@
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="com.example.spotifind"
+                    android:host="callback" />
             </intent-filter>
         </activity>
         <activity
@@ -44,7 +50,7 @@
             android:name=".Autentication.SignUpActivity"
             android:exported="true">
         </activity>
-        <activity android:name=".RadarActivity" />
+        <activity android:name=".radar.RadarActivity" />
     </application>
 
 </manifest>

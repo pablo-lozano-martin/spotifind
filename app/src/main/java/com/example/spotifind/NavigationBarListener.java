@@ -1,22 +1,23 @@
 package com.example.spotifind;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 import android.view.MenuItem;
 
 import androidx.annotation.NonNull;
-import androidx.core.view.GravityCompat;
 
+import com.example.spotifind.friendlist.FriendlistActivity;
+import com.example.spotifind.radar.RadarActivity;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-import com.google.android.material.navigation.NavigationView;
 
 public class NavigationBarListener implements BottomNavigationView.OnNavigationItemSelectedListener {
+    private String uid;
     private Context mContext;
 
-    public NavigationBarListener(Context context) {
+    public NavigationBarListener(Context context,String uid) {
         mContext = context;
+        this.uid= uid;
     }
 
     @Override
@@ -26,10 +27,12 @@ public class NavigationBarListener implements BottomNavigationView.OnNavigationI
         switch (itemId) {
             case R.id.friendlist:
                 Intent friendlist = new Intent(mContext, FriendlistActivity.class);
+                friendlist.putExtra("user_id",uid);
                 mContext.startActivity(friendlist);
                 break;
             case R.id.radar:
                 Intent radar = new Intent(mContext, RadarActivity.class);
+                radar.putExtra("user_id",uid);
                 mContext.startActivity(radar);
                 break;
             case R.id.profile:

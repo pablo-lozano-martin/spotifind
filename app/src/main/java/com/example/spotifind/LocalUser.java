@@ -62,7 +62,7 @@ public class LocalUser {
     public LocalUser() {
     }
 
-    public LocalUser(Context context, String mAccessToken, FirebaseAuth mAuth) {
+    public LocalUser(Context context, FirebaseAuth mAuth) {
         friendList = new ArrayList<>();
         nearUsers = new ArrayList<>();
         this.context = context;
@@ -200,7 +200,7 @@ public class LocalUser {
         updateLocation(this.currentLocation);
     }
 
-    public Location getLocation(Location location) {
+    public Location getLocation() {
         return this.currentLocation;
     }
 
@@ -265,7 +265,8 @@ public class LocalUser {
     }
 
     public void setFirebaseCredentials(FirebaseAuth mAuth) {
-        currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        currentUser = mAuth.getCurrentUser();
+        this.username= currentUser.getEmail();
         this.email = currentUser.getEmail();
         this.uid = currentUser.getUid();
         //save for first time
@@ -364,113 +365,6 @@ public class LocalUser {
         return sharedPreferences.getString(key, null);
     }
 
-    public void getNearUsers(double radiusInMeters) {
-        DatabaseReference userLocationsRef = FirebaseDatabase.getInstance().getReference("userLocations");
-        GeoFire geoFire = new GeoFire(userLocationsRef);
-
-        GeoQuery geoQuery = geoFire.queryAtLocation(
-                new GeoLocation(currentLocation.getLatitude(), currentLocation.getLongitude()),
-                radiusInMeters / 1000 // Convertir metros a kilómetros
-        );
-
-        geoQuery.addGeoQueryEventListener(new GeoQueryEventListener() {
-            @Override
-            public void onKeyEntered(String key, GeoLocation location) {
-                // key es el uid del usuario cercano
-                // Obtén la información adicional del usuario desde el nodo "users" y añádelo a nearUsers
-                getUserInfoAndAddToNearUsers(key);
-                //updateNearUsersOnMap();
-            }
-
-            @Override
-            public void onKeyExited(String key) {
-                // Un usuario salió del área de búsqueda
-                removeUserFromNearUsers(key);
-                //updateNearUsersOnMap();
-            }
-
-            @Override
-            public void onKeyMoved(String key, GeoLocation location) {
-                // La ubicación de un usuario cercano se actualizó
-                //updateUserLocationInNearUsers(key, location);
-                //updateNearUsersOnMap();
-            }
-
-            @Override
-            public void onGeoQueryReady() {
-                // La consulta geoespacial ha finalizado, y todos los eventos iniciales han sido activados
-            }
-
-            @Override
-            public void onGeoQueryError(DatabaseError error) {
-                Log.e("LocalUser", "Error en la consulta geoespacial", error.toException());
-            }
-        });
-
-    }
-
-    private void getUserInfoAndAddToNearUsers(String uid) {
-        DatabaseReference usersRef = FirebaseDatabase.getInstance().getReference("users");
-        usersRef.child(uid).addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                LocalUser user = dataSnapshot.getValue(LocalUser.class);
-                if (user != null) {
-                    // Agrega el usuario a la lista de usuarios cercanos
-                    nearUsers.add(user);
-                }
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-                Log.e("LocalUser", "Error al obtener información de usuario", databaseError.toException());
-            }
-        });
-    }
-
-
-//    public void updateNearUsersOnMap(GoogleMap map) {
-//        // Limpiar el mapa
-//        map.clear();
-//
-//        // Iterar sobre la lista de usuarios cercanos
-//        for (LocalUser user : nearUsers) {
-//            // Obtener la ubicación del usuario
-//            Location userLocation = user.getCurrentLocation();
-//
-//            // Crear un marcador en el mapa para el usuario
-//            MarkerOptions markerOptions = new MarkerOptions()
-//                    .position(new LatLng(userLocation.getLatitude(), userLocation.getLongitude()))
-//                    .title(user.getUsername())
-//                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.marker_icon)); // Personalizar el icono del marcador según tus preferencias
-//
-//            // Agregar el marcador al mapa
-//            map.addMarker(markerOptions);
-//        }
-
-//        // Actualizar el mapa
-//        map.invalidate();
-//    }
-
-    private void removeUserFromNearUsers(String key) {
-        for (LocalUser user : nearUsers) {
-            if (user.getUid().equals(key)) {
-                nearUsers.remove(user);
-                //updateNearUsersOnMap();
-                return;
-            }
-        }
-    }
-
-    private void updateUserLocationInNearUsers(String key, Location location) {
-        for (LocalUser user : nearUsers) {
-            if (user.getUid().equals(key)) {
-                user.setLocation(location);
-                //updateNearUsersOnMap();
-                return;
-            }
-        }
-    }
 
     public void loadUserDataFromFirebase(String userId) {
         DatabaseReference userRef = FirebaseDatabase.getInstance().getReference().child("users").child(userId);
@@ -498,18 +392,20 @@ public class LocalUser {
                 }
 
                 // Actualizar la ubicación del usuario
-                currentLocation = new Location("");
-                currentLocation.setLatitude(snapshot.child("latitude").getValue(Double.class));
-                currentLocation.setLongitude(snapshot.child("longitude").getValue(Double.class));
+                //currentLocation = new Location("");
+                //currentLocation.setLatitude(snapshot.child("latitude").getValue(Double.class));
+                //currentLocation.setLongitude(snapshot.child("longitude").getValue(Double.class));
                 // Actualizar la lista de amigos
                 GenericTypeIndicator<List<String>> friendListType = new GenericTypeIndicator<List<String>>() {
                 };
                 List<String> friendUids = snapshot.child("friendList").getValue(friendListType);
                 friendList.clear();
-                for (String friendUid : friendUids) {
-                    // Cargar los datos de cada amigo desde Firebase y agregarlos a la lista de amigos
-                    loadUserDataFromFirebase(friendUid);
-                }
+                if(friendUids!=null){
+                    for (String friendUid : friendUids) {
+                        // Cargar los datos de cada amigo desde Firebase y agregarlos a la lista de amigos
+                        loadUserDataFromFirebase(friendUid);
+                    }
+                    }
                 // Actualizar la imagen de perfil del usuario
                 String base64Image = snapshot.child("profileImage").getValue(String.class);
                 if (base64Image != null && !base64Image.isEmpty()) {

@@ -23,7 +23,7 @@ public class FriendlistActivity extends AppCompatActivity implements FriendlistA
     private RecyclerView friendlistRecyclerView;
     private BottomNavigationView navBar;
     private FriendlistAdapter adapter;
-    private ArrayList<LocalUser> friendlist;
+    private ArrayList<User> friendlist;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,7 +36,7 @@ public class FriendlistActivity extends AppCompatActivity implements FriendlistA
 
     private void setfriendlist(){
         //TODO set the friendlist
-        this.friendlist = new ArrayList<LocalUser>();
+        this.friendlist = new ArrayList<User>();
     }
 
     private void setInterface() {

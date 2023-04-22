@@ -83,9 +83,9 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
             SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                     .findFragmentById(R.id.map);
             mapFragment.getMapAsync(this);
-
-            locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         }
+
+        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
         // Alternatively, you can use the following code to request permission:
         /*
@@ -154,7 +154,7 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
     public void onLocationChanged(Location location) {
         // Update the last known location and move the camera to it
         lastKnownLatLng = new LatLng(location.getLatitude(), location.getLongitude());
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(lastKnownLatLng, 8f));
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(lastKnownLatLng, 18f));
         Toast.makeText(this, "Location changed", Toast.LENGTH_SHORT).show();
 
         this.minLatitude = location.getLatitude() - 0.5; this.maxLatitude = location.getLatitude() + 0.5;

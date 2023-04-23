@@ -8,6 +8,7 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -46,44 +47,51 @@ public class MainActivity extends AppCompatActivity {
 
     private LocalUser localUser;
     private CompletableFuture<Void> futureUpdate;
-
-
+    private boolean isCodeExecuted = false;
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        mAuth = FirebaseAuth.getInstance();
-        firebaseService= new FirebaseService();
-        getSupportActionBar().hide();
-        binding = ActivityMainBinding.inflate(getLayoutInflater());
-        setContentView(R.layout.activity_main);
-    }
-
-    public void onStart() {
-        super.onStart();
-        mAuth = FirebaseAuth.getInstance();
-        firebaseService= new FirebaseService();
-        FirebaseUser currentUser = mAuth.getCurrentUser();
-        if(currentUser != null){
-            currentUser.reload();
-            autenticarUsuario();
-        } else {
-            Intent intent = new Intent(MainActivity.this, LoginActivity.class);
-            startActivity(intent);
+        protected void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            mAuth = FirebaseAuth.getInstance();
+            firebaseService = new FirebaseService();
+            getSupportActionBar().hide();
+            binding = ActivityMainBinding.inflate(getLayoutInflater());
+            setContentView(R.layout.activity_main);
+            isCodeExecuted = false; // inicializar la variable a false
         }
-    }
 
-    private void showSplashScreen(LocalUser localUser) {
-        setContentView(R.layout.splash_screen);
+        @Override
+        public void onStart() {
+            super.onStart();
 
-        new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                Intent intent = new Intent(MainActivity.this, RadarActivity.class);
-                intent.putExtra("user_id", localUser.getUid());
-                startActivity(intent);
-                finish();
+            if (!isCodeExecuted) {
+                mAuth = FirebaseAuth.getInstance();
+                firebaseService = new FirebaseService();
+
+                if (mAuth.getCurrentUser() == null) {
+                    Intent intent = new Intent(MainActivity.this, LoginActivity.class);
+                    startActivity(intent);
+                } else {
+                    mAuth.getCurrentUser().reload();
+                }
+                isCodeExecuted = true; // establecer la variable a true después de ejecutar el código
             }
-        }, 1000); // muestra la splash screen por 5 segundos antes de cargar la actividad principal
+            else
+                autenticarUsuarioWeb();
+        }
+
+
+        private void showSplashScreen(LocalUser localUser) {
+            setContentView(R.layout.splash_screen);
+
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    Intent intent = new Intent(MainActivity.this, RadarActivity.class);
+                    intent.putExtra("user_id", localUser.getUid());
+                    startActivity(intent);
+                    finish();
+                }
+            }, 1000); // muestra la splash screen por 5 segundos antes de cargar la actividad principal
         /*binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(R.layout.activity_main);
         replaceFragment(new RadarFragment()); //Comienza con el fragment del radar al iniciar la app
@@ -101,28 +109,36 @@ public class MainActivity extends AppCompatActivity {
             }
             return true;
         });*/
-    }
+        }
 
 
+        private void autenticarUsuarioApp() {
+            // Se crea una instancia de AuthorizationRequest con los datos de nuestra aplicación y la URI de redireccionamiento
+            AuthorizationRequest.Builder constructor = new AuthorizationRequest.Builder(
+                    CLIENT_ID,
+                    AuthorizationResponse.Type.TOKEN,
+                    REDIRECT_URI
+            );
+            constructor.setScopes(new String[]{"user-read-private", "playlist-read", "user-library-read", "user-read-currently-playing", "user-read-playback-state", "user-modify-playback-state", "user-top-read"});
+            AuthorizationRequest solicitud = constructor.build();
 
-    private void autenticarUsuario() {
-        // Se crea una instancia de AuthorizationRequest con los datos de nuestra aplicación y la URI de redireccionamiento
-        AuthorizationRequest.Builder constructor = new AuthorizationRequest.Builder(
-                CLIENT_ID,
-                AuthorizationResponse.Type.TOKEN,
-                REDIRECT_URI
-        );
-        constructor.setScopes(new String[]{"user-read-private", "playlist-read", "user-library-read", "user-read-currently-playing", "user-read-playback-state", "user-modify-playback-state","user-top-read"});
-        AuthorizationRequest solicitud = constructor.build();
+            // Se llama al método AuthorizationClient.openLoginActivity() para iniciar la actividad de autenticación de Spotify
+            AuthorizationClient.openLoginActivity(this, REQUEST_CODE, solicitud);
+        }
 
-        // Se llama al método AuthorizationClient.openLoginActivity() para iniciar la actividad de autenticación de Spotify
-        AuthorizationClient.openLoginActivity(this, REQUEST_CODE, solicitud);
-    }
+        private void autenticarUsuarioWeb() {
+            AuthorizationRequest.Builder builder =
+                    new AuthorizationRequest.Builder(CLIENT_ID, AuthorizationResponse.Type.TOKEN, REDIRECT_URI);
 
-    @Override
+            builder.setScopes(new String[]{"streaming", "user-read-private", "playlist-read", "user-library-read", "user-read-currently-playing", "user-read-playback-state", "user-modify-playback-state", "user-top-read"});
+            builder.setShowDialog(true);
+            AuthorizationRequest request = builder.build();
+            AuthorizationClient.openLoginInBrowser(this, request);
+        }
+
+ /*   @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
         super.onActivityResult(requestCode, resultCode, intent);
-
         // Verifica si el resultado proviene de la actividad correcta
         if (requestCode == REQUEST_CODE) {
             AuthorizationResponse respuesta = AuthorizationClient.getResponse(resultCode, intent);
@@ -174,34 +190,86 @@ public class MainActivity extends AppCompatActivity {
                 default:
             }
         }
+    }*/
+
+        private void replaceFragment(Fragment fragment) { //Intercambia el fragment actual por otro
+            FragmentManager fragmentManager = getSupportFragmentManager();
+            FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+            fragmentTransaction.replace(R.id.frame_layout, fragment);
+            fragmentTransaction.commit();
+        }
+
+        @Override
+        public void onBackPressed() {
+            // No se permite volver atrás en la actividad principal
+        }
+
+        private void initializeLocalUser() {
+            localUser = new LocalUser(this, mAuth);
+            localUser.setSpoifyAppRemote(mSpotifyAppRemote);
+            showSplashScreen(localUser);
+            // Llama a los métodos que requieren el token de acceso para inicializar los datos del usuario
+        }
+
+        @Override
+        protected void onDestroy() {
+            super.onDestroy();
+            mAccessToken = null;
+            FirebaseAuth.getInstance().signOut();
+        }
+
+        protected void onNewIntent(Intent intent) {
+            super.onNewIntent(intent);
+            Uri uri = intent.getData();
+            if (uri != null) {
+                AuthorizationResponse response = AuthorizationResponse.fromUri(uri);
+                switch (response.getType()) {
+                    // Response was successful and contains auth token
+                    case TOKEN:
+                        mAccessToken = response.getAccessToken();
+                        Log.d("MainActivity", "token:" + mAccessToken);
+                        // Se crea una instancia de ConnectionParams con el token de acceso y la URI de redireccionamiento
+                        ConnectionParams parametrosConexion = new ConnectionParams.Builder(CLIENT_ID)
+                                .setRedirectUri(REDIRECT_URI)
+                                .build();
+
+                        // Se conecta con la API de Spotify mediante la clase SpotifyAppRemote y se almacena en una variable
+                        SpotifyAppRemote.connect(this, parametrosConexion, new Connector.ConnectionListener() {
+
+                            @Override
+                            public void onConnected(SpotifyAppRemote spotifyAppRemote) {
+                                mSpotifyAppRemote = spotifyAppRemote;
+                                Log.d("MainActivity", "¡Conectado! ¡Genial!");
+                                mAccessToken = response.getAccessToken();
+                                Log.d("Token:", mAccessToken);
+                                initializeLocalUser();
+                                firebaseService.startRealtimeUpdates(localUser.getUid());
+                                // Se suscribe al evento PlayerState para obtener información sobre el estado del reproductor de Spotify
+                                mSpotifyAppRemote.getPlayerApi().subscribeToPlayerState().setEventCallback(playerState -> {
+                                    final Track track = playerState.track;
+                                    if (track != null) {
+                                        //binding.currentSongTitle.setText(track.name);
+                                        //binding.currentSongArtist.setText(track.artist.name);
+                                    }
+                                });
+                            }
+
+                            @Override
+                            public void onFailure(Throwable error) {
+                                Log.e(String.valueOf(this), "error");
+                            }
+                        });
+                        break;
+                    // Auth flow returned an error
+                    case ERROR:
+                        // Handle error response
+                        break;
+
+                    // Most likely auth flow was cancelled
+                    default:
+                        // Handle other cases
+                }
+            }
+        }
+
     }
-
-
-
-    private void replaceFragment(Fragment fragment){ //Intercambia el fragment actual por otro
-        FragmentManager fragmentManager = getSupportFragmentManager();
-        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-        fragmentTransaction.replace(R.id.frame_layout, fragment);
-        fragmentTransaction.commit();
-    }
-
-    @Override
-    public void onBackPressed() {
-        // No se permite volver atrás en la actividad principal
-    }
-
-    private void initializeLocalUser() {
-        localUser = new LocalUser(this,mAuth);
-        localUser.setSpoifyAppRemote(mSpotifyAppRemote);
-        showSplashScreen(localUser);
-        // Llama a los métodos que requieren el token de acceso para inicializar los datos del usuario
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        mAccessToken = null;
-        FirebaseAuth.getInstance().signOut();
-    }
-
-}

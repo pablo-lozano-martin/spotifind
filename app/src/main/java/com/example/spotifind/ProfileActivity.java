@@ -1,6 +1,7 @@
 package com.example.spotifind;
 
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
@@ -13,8 +14,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.spotifind.OnItemClickListener;
-import com.example.spotifind.ArtistAdapter.OnItemClickListener;
+/*import com.example.spotifind.OnItemClickListener;
+import com.example.spotifind.ArtistAdapter.OnItemClickListener;*/
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,7 +28,7 @@ public class ProfileActivity extends AppCompatActivity implements OnItemClickLis
     private Button spotifyButton;
 
     private RecyclerView recyclerViewTop5Artists;
-    private ArtistAdapter artistAdapter;
+    /*private ArtistAdapter artistAdapter;*/
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,7 +45,7 @@ public class ProfileActivity extends AppCompatActivity implements OnItemClickLis
         List<Artist> artistList = new ArrayList<>();
         // código para obtener los artistas de la API y agregarlos a la lista
 
-        artistAdapter = new ArtistAdapter(artistList, new ArtistAdapter.OnItemClickListener() {
+       /* artistAdapter = new ArtistAdapter(artistList, new ArtistAdapter.OnItemClickListener() {
             @Override
             public void onArtistClick(Artist artist) {
                 // Abrir la página del artista en la aplicación de Spotify
@@ -52,11 +53,11 @@ public class ProfileActivity extends AppCompatActivity implements OnItemClickLis
                 intent.setData(Uri.parse(artist.getExternalUrls().getSpotify()));
                 startActivity(intent);
             }
-        });
+        });*/
 
         // Configurar RecyclerView
         recyclerViewTop5Artists.setLayoutManager(new LinearLayoutManager(this));
-        recyclerViewTop5Artists.setAdapter(artistAdapter);
+        /*recyclerViewTop5Artists.setAdapter(artistAdapter);*/
 
         // Listener botón editar el perfil
         editButton.setOnClickListener(new View.OnClickListener() {
@@ -77,10 +78,20 @@ public class ProfileActivity extends AppCompatActivity implements OnItemClickLis
 
     @Override
     public void onItemClick(int position) {
-        Artist artist = artistList.get(position);
+        /*Artist artist = artistList.get(position);
         Intent intent = new Intent(Intent.ACTION_VIEW);
         intent.setData(Uri.parse(artist.getExternalUrls().getSpotify()));
-        startActivity(intent);
+        startActivity(intent);*/
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            // acciones específicas en vista apaisada
+        } else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) {
+            // acciones específicas en vista vertical
+        }
     }
 }
 

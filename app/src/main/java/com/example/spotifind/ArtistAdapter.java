@@ -1,3 +1,4 @@
+/*
 package com.example.spotifind;
 
 import android.content.Intent;
@@ -81,3 +82,4 @@ public class ArtistAdapter extends RecyclerView.Adapter<ArtistAdapter.ArtistView
     }
 
 }
+*/

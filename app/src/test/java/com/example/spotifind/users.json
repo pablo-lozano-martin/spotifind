@@ -1,0 +1,44 @@
+{
+  "users": {
+    "user1": {
+      "uid": "uid1",
+      "username": "usuario1",
+      "lastPlayedSong": "Canción 1"
+    },
+    "user2": {
+      "uid": "uid2",
+      "username": "usuario2",
+      "lastPlayedSong": "Canción 2"
+    },
+    "user3": {
+      "uid": "uid3",
+      "username": "usuario3",
+      "lastPlayedSong": "Canción 3"
+    }
+  },
+  "userLocations": {
+    "uid1": {
+      "g": "9q8yywe2y6",
+      "l": {
+        "0": 37.783928,
+        "1": -122.410790
+      }
+    },
+    "uid2": {
+      "g": "9q8yyg7qph",
+      "l": {
+        "0": 37.785678,
+        "1": -122.417910
+      }
+    },
+    "uid3": {
+      "g": "9q8yygbrw5",
+      "l": {
+        "0": 37.782100,
+        "1": -122.409586
+      }
+    }
+  }
+}
+
+

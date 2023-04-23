@@ -183,21 +183,8 @@ public class LocalUser {
         return username;
     }
 
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
     public String getUid() {
         return uid;
-    }
-
-    public void setUid(String uid) {
-        this.uid = uid;
-    }
-
-    public void setLocation(Location location) {
-        this.currentLocation = location;
-        updateLocation(this.currentLocation);
     }
 
     public Location getLocation() {
@@ -261,7 +248,6 @@ public class LocalUser {
         DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference("users");
         databaseRef.child(userId).setValue(this);
         Log.d("LocalUser", "User saved to Firebase Realtime Database");
-        readFromFirebase();
     }
 
     public void setFirebaseCredentials(FirebaseAuth mAuth) {
@@ -295,64 +281,6 @@ public class LocalUser {
         updateCurrentSong();
     }
 
-    public void readFromFirebase() {
-        DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference("users").child(this.getUid());
-        Log.d("UID:", uid);
-        databaseRef.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                LocalUser user = dataSnapshot.getValue(LocalUser.class);
-                if (user != null) {
-                    Log.d("LocalUser", "Username: " + user.getUsername());
-
-                    List<CustomArtist> top5Artists = user.getTop5Artists();
-                    if (top5Artists != null) {
-                        for (CustomArtist artist : top5Artists) {
-                            Log.d("LocalUser", "Top 5 artists: " + artist.getName());
-                        }
-                    } else {
-                        Log.d("LocalUser", "Top 5 artists: null");
-                    }
-
-                    List<CustomTrack> top5Songs = user.getTop5Songs();
-                    if (top5Songs != null) {
-                        for (CustomTrack song : top5Songs) {
-                            Log.d("LocalUser", "Top 5 songs: " + song.getName());
-                        }
-                    } else {
-                        Log.d("LocalUser", "Top 5 songs: null");
-                    }
-
-                    Track lastPlayedSong = user.getLastPlayedSong();
-                    if (lastPlayedSong != null) {
-                        Log.d("LocalUser", "Last played song: " + lastPlayedSong.name);
-                    } else {
-                        Log.d("LocalUser", "Last played song: null");
-                    }
-                }
-            }
-
-            @Override
-            public void onCancelled(DatabaseError error) {
-                Log.w("LocalUser", "Failed to read value.", error.toException());
-            }
-        });
-    }
-
-    // Escuchar los cambios de ubicación del usuario y actualizar la interfaz de usuario
-    public void listenForLocationChanges(ValueEventListener listener) {
-        DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference("users").child(uid);
-        databaseRef.addValueEventListener(listener);
-    }
-
-    // Actualizar la ubicación del usuario en tiempo real en Firebase Realtime Database
-    public void updateLocation(Location location) {
-        DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference("users").child(uid);
-        //databaseRef.child("latitude").setValue(location.getLatitude());
-        //databaseRef.child("longitude").setValue(location.getLongitude());
-        Log.d("LocalUser", "Location " + location);
-    }
-
     private void saveDataToCache(Context context, String key, String jsonData) {
         SharedPreferences sharedPreferences = context.getSharedPreferences("SPOTIFIND_CACHE", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
@@ -368,7 +296,7 @@ public class LocalUser {
 
     public void loadUserDataFromFirebase(String userId) {
         DatabaseReference userRef = FirebaseDatabase.getInstance().getReference().child("users").child(userId);
-        userRef.addValueEventListener(new ValueEventListener() {
+        userRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 // Actualizar los datos del usuario con los valores obtenidos de Firebase

@@ -5,8 +5,9 @@ import com.spotify.protocol.types.Artist;
 public class CustomArtist{
     private String id;
     private String name;
-
     private String imageUrl;
+
+    private String uri; // Asegúrate de tener este campo en la clase CustomArtist
 
     public CustomArtist() {
     }
@@ -42,7 +43,11 @@ public class CustomArtist{
     }
 
     public String getUri() {
-        return "spotify:artist:" + id;
+        return uri;
+    }
+
+    public void setUri(String uri) {
+        this.uri = uri;
     }
 
 }

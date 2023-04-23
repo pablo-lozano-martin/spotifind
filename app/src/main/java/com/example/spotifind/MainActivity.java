@@ -2,12 +2,14 @@ package com.example.spotifind;
 
 import static com.spotify.sdk.android.auth.LoginActivity.REQUEST_CODE;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -48,36 +50,37 @@ public class MainActivity extends AppCompatActivity {
     private LocalUser localUser;
     private CompletableFuture<Void> futureUpdate;
     private boolean isCodeExecuted = false;
+
     @Override
-        protected void onCreate(Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
-            mAuth = FirebaseAuth.getInstance();
-            firebaseService = new FirebaseService();
-            getSupportActionBar().hide();
-            binding = ActivityMainBinding.inflate(getLayoutInflater());
-            setContentView(R.layout.activity_main);
-            isCodeExecuted = false; // inicializar la variable a false
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        mAuth = FirebaseAuth.getInstance();
+        firebaseService = new FirebaseService();
+        getSupportActionBar().hide();
+        binding = ActivityMainBinding.inflate(getLayoutInflater());
+        setContentView(R.layout.activity_main);
+
+        mAuth = FirebaseAuth.getInstance();
+        firebaseService = new FirebaseService();
+
+        if (mAuth.getCurrentUser() == null) {
+            Intent intent = new Intent(MainActivity.this, LoginActivity.class);
+            startActivity(intent);
+        } else {
+            mAuth.getCurrentUser().reload();
+            guardarEstadoAutenticacion(true);
         }
+    }
 
-        @Override
-        public void onStart() {
-            super.onStart();
+    @Override
+    public void onStart() {
+        super.onStart();
+        mAuth = FirebaseAuth.getInstance();
+        firebaseService = new FirebaseService();
 
-            if (!isCodeExecuted) {
-                mAuth = FirebaseAuth.getInstance();
-                firebaseService = new FirebaseService();
-
-                if (mAuth.getCurrentUser() == null) {
-                    Intent intent = new Intent(MainActivity.this, LoginActivity.class);
-                    startActivity(intent);
-                } else {
-                    mAuth.getCurrentUser().reload();
-                }
-                isCodeExecuted = true; // establecer la variable a true después de ejecutar el código
-            }
-            else
-                autenticarUsuarioWeb();
-        }
+        if(mAuth.getCurrentUser()!=null)
+            autenticarUsuarioWeb();
+    }
 
 
         private void showSplashScreen(LocalUser localUser) {
@@ -131,9 +134,10 @@ public class MainActivity extends AppCompatActivity {
                     new AuthorizationRequest.Builder(CLIENT_ID, AuthorizationResponse.Type.TOKEN, REDIRECT_URI);
 
             builder.setScopes(new String[]{"streaming", "user-read-private", "playlist-read", "user-library-read", "user-read-currently-playing", "user-read-playback-state", "user-modify-playback-state", "user-top-read"});
-            builder.setShowDialog(true);
+            builder.setShowDialog(false);
             AuthorizationRequest request = builder.build();
             AuthorizationClient.openLoginInBrowser(this, request);
+
         }
 
  /*   @Override
@@ -218,6 +222,18 @@ public class MainActivity extends AppCompatActivity {
             FirebaseAuth.getInstance().signOut();
         }
 
+    private void guardarEstadoAutenticacion(boolean autenticado) {
+        SharedPreferences sharedPreferences = getSharedPreferences("preferencias", MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putBoolean("autenticado", autenticado);
+        editor.apply();
+    }
+
+    private boolean obtenerEstadoAutenticacion() {
+        SharedPreferences sharedPreferences = getSharedPreferences("preferencias", MODE_PRIVATE);
+        return sharedPreferences.getBoolean("autenticado", false);
+    }
+
         protected void onNewIntent(Intent intent) {
             super.onNewIntent(intent);
             Uri uri = intent.getData();
@@ -227,6 +243,7 @@ public class MainActivity extends AppCompatActivity {
                     // Response was successful and contains auth token
                     case TOKEN:
                         mAccessToken = response.getAccessToken();
+                        guardarAccessToken(mAccessToken);
                         Log.d("MainActivity", "token:" + mAccessToken);
                         // Se crea una instancia de ConnectionParams con el token de acceso y la URI de redireccionamiento
                         ConnectionParams parametrosConexion = new ConnectionParams.Builder(CLIENT_ID)
@@ -272,4 +289,23 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
+    private void guardarAccessToken(String accessToken) {
+        SharedPreferences sharedPreferences = getSharedPreferences("preferencias", MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putString("access_token", accessToken);
+        editor.apply();
     }
+    private String obtenerAccessToken() {
+        SharedPreferences sharedPreferences = getSharedPreferences("preferencias", MODE_PRIVATE);
+        return sharedPreferences.getString("access_token", null);
+    }
+
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        // Guarda el estado de la aplicación que deseas conservar
+        outState.putBoolean("isCodeExecuted", isCodeExecuted);
+    }
+
+
+}

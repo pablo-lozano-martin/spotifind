@@ -234,7 +234,6 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
         // Actualiza la última ubicación conocida y mueve la cámara hacia ella
         lastKnownLatLng = new LatLng(location.getLatitude(), location.getLongitude());
         setLastKnownLatLng(lastKnownLatLng);
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(lastKnownLatLng, 8f));
         Toast.makeText(this, "Ubicación cambiada", Toast.LENGTH_SHORT).show();
         this.minLatitude = location.getLatitude() - 0.5; this.maxLatitude = location.getLatitude() + 0.5;
         this.minLongitude = location.getLongitude() - 0.5; this.maxLongitude = location.getLongitude() + 0.5;

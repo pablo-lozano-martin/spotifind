@@ -72,6 +72,7 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
     private FirebaseUser currentUser;
     private String userid;
 
+
     private AtomicInteger usersToProcess;
 
     private ActivityResultLauncher<String[]> requestPermissionLauncher =
@@ -104,7 +105,7 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
             @Override
             public void onLocationReceived(LatLng location) {
                 // Llama a getNearUsers con la ubicación recibida
-                getNearUsers(1000000000);
+                getNearUsers(3000);
             }
 
             @Override
@@ -242,7 +243,6 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
         locationData.put("latitude", lastKnownLatLng.latitude);
         locationData.put("longitude", lastKnownLatLng.longitude);
         userLocationsRef.child(this.userid).child("location").setValue(locationData);
-
     }
 
 

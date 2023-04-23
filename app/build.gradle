@@ -14,7 +14,6 @@ android {
         versionCode 1
         versionName "1.0"
         manifestPlaceholders = [redirectHostName: "localhost",redirectSchemeName: "com.example.spotifind://callback"]
-
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -45,7 +44,8 @@ dependencies {
     implementation 'com.google.android.gms:play-services-maps:18.1.0'
     //implementation 'com.google.maps.android:android-maps-utils:2.3.0'
     //implementation 'com.google.maps.android:maps-utils-ktx:3.4.0'
-    implementation 'com.spotify.android:auth:1.2.3'
+    implementation 'com.spotify.android:auth:1.2.5' // Maven dependency
+
     implementation 'com.squareup.retrofit2:retrofit:2.9.0'
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'

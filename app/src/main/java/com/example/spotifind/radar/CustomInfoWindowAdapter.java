@@ -48,6 +48,8 @@ public class CustomInfoWindowAdapter implements GoogleMap.InfoWindowAdapter {
             Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(uri));
             mContext.startActivity(intent);
         });
+
+
     }
 
 

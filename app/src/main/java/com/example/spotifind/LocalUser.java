@@ -1,5 +1,6 @@
 package com.example.spotifind;
 
+
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.location.Location;
@@ -37,6 +38,7 @@ public class LocalUser {
 
     private String username;
     private String uid;
+
     private String spotitoken;
     private List<CustomArtist> top5Artists;
     private Track lastPlayedSong;
@@ -61,6 +63,8 @@ public class LocalUser {
 
     private List<LocalUser> nearUsers;
 
+    private List<String> notification;
+
     private Location currentLocation;
 
     Context context;
@@ -68,12 +72,11 @@ public class LocalUser {
 
     public LocalUser() {
     }
-    public LocalUser(Context context, String uid) {
+    public LocalUser(Context context,String uid) {
 
         friendList = new ArrayList<>();
         nearUsers = new ArrayList<>();
         this.context = context;
-        this.uid=uid;
         // Cargar los datos del usuario desde Firebase
         loadUserDataFromFirebase(uid);
 
@@ -142,6 +145,11 @@ public class LocalUser {
             }
         });
         artistImageUriService.execute(new Pair<>("artists", artistIds));
+    }
+
+    public void setUid(String uid){
+        this.uid=uid;
+        saveToFirebase(uid);
     }
 
     private void updateTop5Tracks(List<CustomTrack> tracks) {
@@ -253,13 +261,16 @@ public class LocalUser {
         Log.d("LocalUser", "User saved to Firebase Realtime Database");
     }
 
-    public void setFirebaseCredentials(FirebaseAuth mAuth) {
-        currentUser = mAuth.getCurrentUser();
-        this.username= currentUser.getEmail();
-        this.email = currentUser.getEmail();
+    public void addFriend(String userId){
+        DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference("users");
+
+        Log.d("LocalUser", "User saved to Firebase Realtime Database");
+    }
+
+    public void setUid() {
         this.uid = currentUser.getUid();
         //save for first time
-        this.saveToFirebase(this.uid);
+
         Log.d("LocalUser", "Firebase credentials set");
     }
 
@@ -303,6 +314,7 @@ public class LocalUser {
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 // Actualizar los datos del usuario con los valores obtenidos de Firebase
                 username = snapshot.child("username").getValue(String.class);
+
                 GenericTypeIndicator<List<CustomArtist>> artistListType = new GenericTypeIndicator<List<CustomArtist>>() {
                 };
                 GenericTypeIndicator<List<CustomTrack>> trackListType = new GenericTypeIndicator<List<CustomTrack>>() {

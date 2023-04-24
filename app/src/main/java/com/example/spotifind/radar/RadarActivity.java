@@ -218,6 +218,7 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
                             String userSong = user.getLastPlayedSong().name;
                             mMap.setInfoWindowAdapter(new CustomInfoWindowAdapter(RadarActivity.this, user));
                             marker.showInfoWindow(); // Mostrar la ventana de información personalizada
+
                         }
                     }
 

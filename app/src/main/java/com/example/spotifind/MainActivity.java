@@ -44,7 +44,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int LOGIN_ACTIVITY_REQUEST_CODE = 1;
 
     private ActivityMainBinding mBinding;
-    public static FirebaseAuth mAuth;
+    private FirebaseAuth mAuth;
     private FirebaseService mFirebaseService;
     private SpotifyAppRemote mSpotifyAppRemote;
     private static String mAccessToken;

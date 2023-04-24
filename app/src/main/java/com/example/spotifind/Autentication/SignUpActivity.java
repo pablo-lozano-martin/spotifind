@@ -22,6 +22,9 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class SignUpActivity extends AppCompatActivity {
 
     private static final String TAG = "SignUpActivity";
@@ -140,8 +143,7 @@ public class SignUpActivity extends AppCompatActivity {
     }
 
 
-    private void createUserWithEmailAndPassword(final String username,final String email,final String password) {
-
+    private void createUserWithEmailAndPassword(final String username, final String email, final String password) {
         mAuth.createUserWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
                     @Override
@@ -153,7 +155,14 @@ public class SignUpActivity extends AppCompatActivity {
 
                             // Guardar el nombre de usuario en la base de datos en tiempo real de Firebase
                             mDatabase.child("usernames").child(username).setValue(userId);
-                            mDatabase.child("users").child(userId).child("username").setValue(username);
+
+                            // Crear un objeto Map para guardar la información del usuario
+                            Map<String, Object> userMap = new HashMap<>();
+                            userMap.put("uid", userId);
+                            userMap.put("username", username);
+
+                            // Guardar la información del usuario en la base de datos en tiempo real de Firebase
+                            mDatabase.child("users").child(userId).setValue(userMap);
 
                             Toast.makeText(SignUpActivity.this, "¡Registro exitoso!", Toast.LENGTH_SHORT).show();
                             finish(); // volver a la actividad de inicio de sesión
@@ -161,9 +170,9 @@ public class SignUpActivity extends AppCompatActivity {
                             // Si el registro falla, mostrar un mensaje al usuario
                             Log.w(TAG, "createUserWithEmail:failure", task.getException());
                             Toast.makeText(SignUpActivity.this, "El registro falló.", Toast.LENGTH_SHORT).show();
-                            //recreate();?
                         }
                     }
                 });
     }
+
 }

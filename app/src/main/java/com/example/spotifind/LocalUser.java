@@ -274,7 +274,7 @@ public class LocalUser {
         Log.d("LocalUser", "Firebase credentials set");
     }
 
-    public void updateCurrentSong() {
+    public void updateCurrentSong(SpotifyAppRemote mspotifyAppRemote) {
         // Subscribe to PlayerState
         this.subscription = mspotifyAppRemote.getPlayerApi()
                 .subscribeToPlayerState()
@@ -291,8 +291,7 @@ public class LocalUser {
     }
 
     public void setSpoifyAppRemote(SpotifyAppRemote mSpotifyAppRemote) {
-        mspotifyAppRemote = mSpotifyAppRemote;
-        updateCurrentSong();
+        updateCurrentSong(mSpotifyAppRemote);
     }
 
     private void saveDataToCache(Context context, String key, String jsonData) {
@@ -314,7 +313,9 @@ public class LocalUser {
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 // Actualizar los datos del usuario con los valores obtenidos de Firebase
                 username = snapshot.child("username").getValue(String.class);
-
+                if(snapshot.child("uid").getValue(String.class) != null) {
+                    uid = snapshot.child("uid").getValue(String.class);
+                }
                 GenericTypeIndicator<List<CustomArtist>> artistListType = new GenericTypeIndicator<List<CustomArtist>>() {
                 };
                 GenericTypeIndicator<List<CustomTrack>> trackListType = new GenericTypeIndicator<List<CustomTrack>>() {

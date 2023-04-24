@@ -105,13 +105,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // Muestra la pantalla de inicio
-    private void showSplashScreen() {
+    private void showSplashScreen(SpotifyAppRemote mSpotifyAppRemote) {
         setContentView(R.layout.splash_screen);
 
         new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {
-                initializeLocalUser();
+                initializeLocalUser(mSpotifyAppRemote);
                 obtenerAccessToken();
                 Intent intent = new Intent(MainActivity.this, RadarActivity.class);
                 intent.putExtra("user_id", obtenerUserId());
@@ -135,7 +135,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // Inicializa los datos del usuario local
-    private void initializeLocalUser() {
+    private void initializeLocalUser(SpotifyAppRemote mSpotifyAppRemote) {
         mAccessToken = obtenerAccessToken();
         mLocalUser = new LocalUser(this,obtenerUserId());
         mLocalUser.setSpoifyAppRemote(mSpotifyAppRemote);
@@ -207,7 +207,9 @@ public class MainActivity extends AppCompatActivity {
                     mSpotifyAppRemote = spotifyAppRemote;
                     Log.d("MainActivity", "¡Conectado! ¡Genial!");
                     //mFirebaseService.startRealtimeUpdates(obtenerUserId());
-                    showSplashScreen();
+                    String trackUri = "spotify:track:7pZlVg1ppWVhUGzR1N4Fwb?si=11303f15524e4ff0 "; // Reemplaza esto con el URI de la canción que deseas reproducir
+                    playTrack(trackUri);
+                    showSplashScreen(mSpotifyAppRemote);
                     mSpotifyAppRemote.getPlayerApi().subscribeToPlayerState().setEventCallback(playerState -> {
                         final Track track = playerState.track;
                         if (track != null) {
@@ -253,5 +255,9 @@ public class MainActivity extends AppCompatActivity {
 
     public Context getContext() {
         return mContext;
+    }
+
+    private void playTrack(String trackUri) {
+        mSpotifyAppRemote.getPlayerApi().play(trackUri);
     }
 }

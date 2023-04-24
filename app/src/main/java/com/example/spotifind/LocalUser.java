@@ -72,16 +72,17 @@ public class LocalUser {
 
     public LocalUser() {
     }
-    public LocalUser(Context context,String uid) {
+    public LocalUser(Context context,String uid,String spotitoken) {
 
         friendList = new ArrayList<>();
         nearUsers = new ArrayList<>();
         this.context = context;
+        this.spotitoken=spotitoken;
+        setUid(uid);
         // Cargar los datos del usuario desde Firebase
-        loadUserDataFromFirebase(uid);
 
         SpotifyService artistSpotifyService = new SpotifyService(
-                MainActivity.getToken(),
+                spotitoken,
                 "artists",
                 null,
                 new SpotifyService.SpotifyCallback<List<CustomArtist>>() {
@@ -98,7 +99,7 @@ public class LocalUser {
         );
 
         SpotifyService trackSpotifyService = new SpotifyService(
-                MainActivity.getToken(),
+                spotitoken,
                 "tracks",
                 new SpotifyService.SpotifyCallback<List<CustomTrack>>() {
                     @Override
@@ -149,8 +150,8 @@ public class LocalUser {
 
     public void setUid(String uid){
         this.uid=uid;
-        saveToFirebase(uid);
     }
+
 
     private void updateTop5Tracks(List<CustomTrack> tracks) {
         List<CustomTrack> trackPairs = new ArrayList<>();
@@ -255,11 +256,6 @@ public class LocalUser {
 
 
     // Save user data to Firebase Realtime Database
-    public void saveToFirebase(String userId) {
-        DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference("users");
-        databaseRef.child(userId).setValue(this);
-        Log.d("LocalUser", "User saved to Firebase Realtime Database");
-    }
 
     public void addFriend(String userId){
         DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference("users");
@@ -267,16 +263,9 @@ public class LocalUser {
         Log.d("LocalUser", "User saved to Firebase Realtime Database");
     }
 
-    public void setUid() {
-        this.uid = currentUser.getUid();
-        //save for first time
-
-        Log.d("LocalUser", "Firebase credentials set");
-    }
-
-    public void updateCurrentSong(SpotifyAppRemote mspotifyAppRemote) {
+    public void updateCurrentSong() {
         // Subscribe to PlayerState
-        this.subscription = mspotifyAppRemote.getPlayerApi()
+        this.subscription = MainActivity.mSpotifyAppRemote.getPlayerApi()
                 .subscribeToPlayerState()
                 .setEventCallback(playerState -> {
                     Track track = playerState.track;
@@ -290,8 +279,8 @@ public class LocalUser {
                 });
     }
 
-    public void setSpoifyAppRemote(SpotifyAppRemote mSpotifyAppRemote) {
-        updateCurrentSong(mSpotifyAppRemote);
+    public void setSpoifyAppRemote() {
+        updateCurrentSong();
     }
 
     private void saveDataToCache(Context context, String key, String jsonData) {
@@ -306,58 +295,5 @@ public class LocalUser {
         return sharedPreferences.getString(key, null);
     }
 
-    public void loadUserDataFromFirebase(String userId) {
-        DatabaseReference userRef = FirebaseDatabase.getInstance().getReference().child("users").child(userId);
-        userRef.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                // Actualizar los datos del usuario con los valores obtenidos de Firebase
-                username = snapshot.child("username").getValue(String.class);
-                if(snapshot.child("uid").getValue(String.class) != null) {
-                    uid = snapshot.child("uid").getValue(String.class);
-                }
-                GenericTypeIndicator<List<CustomArtist>> artistListType = new GenericTypeIndicator<List<CustomArtist>>() {
-                };
-                GenericTypeIndicator<List<CustomTrack>> trackListType = new GenericTypeIndicator<List<CustomTrack>>() {
-                };
-                top5Artists = snapshot.child("top5Artists").getValue(artistListType);
-                top5Songs = snapshot.child("top5Songs").getValue(trackListType);
-
-                // Actualizar la última canción reproducida
-                if (snapshot.child("lastPlayedSong").exists()) {
-                    Track lastTrack = snapshot.child("lastPlayedSong").getValue(Track.class);
-                    if (lastTrack != null) {
-                        lastPlayedSong = lastTrack;
-                    }
-                }
-
-                // Actualizar la ubicación del usuario
-                //currentLocation = new Location("");
-                //currentLocation.setLatitude(snapshot.child("latitude").getValue(Double.class));
-                //currentLocation.setLongitude(snapshot.child("longitude").getValue(Double.class));
-                // Actualizar la lista de amigos
-                GenericTypeIndicator<List<String>> friendListType = new GenericTypeIndicator<List<String>>() {
-                };
-                List<String> friendUids = snapshot.child("friendList").getValue(friendListType);
-                friendList.clear();
-                if (friendUids != null) {
-                    for (String friendUid : friendUids) {
-                        // Cargar los datos de cada amigo desde Firebase y agregarlos a la lista de amigos
-                        loadUserDataFromFirebase(friendUid);
-                    }
-                }
-                // Actualizar la imagen de perfil del usuario
-                String base64Image = snapshot.child("profileImage").getValue(String.class);
-                if (base64Image != null && !base64Image.isEmpty()) {
-                    //profileImage = Base64.decode(base64Image, Base64.DEFAULT);
-                }
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                Log.e("LocalUser", "Error al cargar los datos del usuario desde Firebase", error.toException());
-            }
-        });
-    }
 
 }

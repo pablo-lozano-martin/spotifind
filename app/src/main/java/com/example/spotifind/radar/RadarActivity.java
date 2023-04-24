@@ -72,13 +72,9 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
     private double minLongitude, maxLongitude;
 
     private List<Pair<LatLng, String>> nearUsers;
-    private FirebaseAuth mAuth;
-    private FirebaseUser currentUser;
-    private String userid;
-
-    private Marker userMarker;
-
     private HashMap<String, Marker> marcadoresUsuarios;
+
+    private String userid;
 
     private AtomicInteger usersToProcess;
 
@@ -101,9 +97,8 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_radar);
-        mAuth = FirebaseAuth.getInstance();
-        currentUser = mAuth.getCurrentUser();
-        userid = getIntent().getStringExtra("user_id");
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        userid=currentUser.getUid();
         usersToProcess = new AtomicInteger(0);
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         nearUsers = new ArrayList<>();

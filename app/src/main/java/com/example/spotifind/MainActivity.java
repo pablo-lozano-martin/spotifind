@@ -1,5 +1,8 @@
 package com.example.spotifind;
 
+import static com.spotify.sdk.android.auth.AuthorizationResponse.Type.TOKEN;
+import static com.spotify.sdk.android.auth.LoginActivity.REQUEST_CODE;
+
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -29,6 +32,9 @@ import com.google.firebase.auth.FirebaseUser;
 import com.spotify.android.appremote.api.ConnectionParams;
 import com.spotify.android.appremote.api.Connector;
 import com.spotify.android.appremote.api.SpotifyAppRemote;
+import com.spotify.android.appremote.api.error.CouldNotFindSpotifyApp;
+import com.spotify.android.appremote.api.error.NotLoggedInException;
+import com.spotify.android.appremote.api.error.UserNotAuthorizedException;
 import com.spotify.protocol.types.Track;
 import com.spotify.sdk.android.auth.AuthorizationClient;
 import com.spotify.sdk.android.auth.AuthorizationRequest;
@@ -46,7 +52,7 @@ public class MainActivity extends AppCompatActivity {
     private ActivityMainBinding mBinding;
     private FirebaseAuth mAuth;
     private FirebaseService mFirebaseService;
-    private SpotifyAppRemote mSpotifyAppRemote;
+    public static SpotifyAppRemote mSpotifyAppRemote;
     private static String mAccessToken;
     private LocalUser mLocalUser;
 
@@ -54,6 +60,28 @@ public class MainActivity extends AppCompatActivity {
     private ActivityResultLauncher<Intent> mLoginActivityResultLauncher;
     private boolean mIsCodeExecuted = false;
     private Context mContext;
+
+    private final static ConnectionParams parametrosConexion = new ConnectionParams.Builder(CLIENT_ID)
+            .setRedirectUri(REDIRECT_URI)
+            .build();
+
+
+    Connector.ConnectionListener mConnectionListener = new Connector.ConnectionListener() {
+        @Override
+        public void onConnected(SpotifyAppRemote spotifyAppRemote) {
+            mSpotifyAppRemote = spotifyAppRemote;
+        }
+
+        @Override
+        public void onFailure(Throwable error) {
+            if (error instanceof NotLoggedInException || error instanceof UserNotAuthorizedException) {
+
+            } else if (error instanceof CouldNotFindSpotifyApp) {
+               //
+            }
+        }
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -69,29 +97,17 @@ public class MainActivity extends AppCompatActivity {
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
                     if (result.getResultCode() == RESULT_OK) {
-                        Intent data = result.getData();
-                        if (data != null) {
-                            guardarEstadoAutenticacion(true);
-                            guardarAccessToken(data.getStringExtra("access_token"));
-                            Log.i("Token",data.getStringExtra("access_token"));
-                            guardarUserId(mAuth.getUid());
-                            conectarSpotifyAppRemote();
-                        } else {
-                            Toast.makeText(MainActivity.this, "Error al obtener el token de acceso de Spotify.", Toast.LENGTH_SHORT).show();
-                        }
-                    } else {
-                        // Si no se obtiene el token de acceso, manejar el error
-                        Toast.makeText(MainActivity.this, "Error al obtener el token de acceso de Spotify.", Toast.LENGTH_SHORT).show();
+                        authUser();
+                        showSplashScreen();
+                    }
+                    else {
                     }
                 });
 
-        final boolean firebaseAuth = mAuth.getCurrentUser() != null;
-        final boolean spotifyAuth = obtenerEstadoAutenticacion();
-
-        if (firebaseAuth && spotifyAuth) {
+        if (mAuth.getCurrentUser()!=null) {
             mAuth.getCurrentUser().reload();
             mAccessToken = obtenerAccessToken();
-            conectarSpotifyAppRemote();
+            showSplashScreen();
         } else {
             Intent intent = new Intent(MainActivity.this, LoginActivity.class);
             mLoginActivityResultLauncher.launch(intent);
@@ -100,23 +116,27 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onStart() {
-        conectarSpotifyAppRemote();
         super.onStart();
+        SpotifyAppRemote.disconnect(mSpotifyAppRemote);
+        SpotifyAppRemote.connect(this, parametrosConexion, mConnectionListener);
+
     }
 
-    // Muestra la pantalla de inicio
-    private void showSplashScreen(SpotifyAppRemote mSpotifyAppRemote) {
-        setContentView(R.layout.splash_screen);
+        @Override
+        protected void onStop() {
+            super.onStop();
+            SpotifyAppRemote.disconnect(mSpotifyAppRemote);
+    }
 
+
+    // Muestra la pantalla de inicio
+    private void showSplashScreen() {
+        setContentView(R.layout.splash_screen);
+        SpotifyAppRemote.connect(this, parametrosConexion, mConnectionListener);
         new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {
-                initializeLocalUser(mSpotifyAppRemote);
-                obtenerAccessToken();
-                Intent intent = new Intent(MainActivity.this, RadarActivity.class);
-                intent.putExtra("user_id", obtenerUserId());
-                startActivity(intent);
-                finish();
+                initializeLocalUser();
             }
         }, 1000); // muestra la splash screen por 5 segundos antes de cargar la actividad principal
     }
@@ -135,12 +155,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // Inicializa los datos del usuario local
-    private void initializeLocalUser(SpotifyAppRemote mSpotifyAppRemote) {
+    private void initializeLocalUser() {
         mAccessToken = obtenerAccessToken();
-        mLocalUser = new LocalUser(this,obtenerUserId());
-        mLocalUser.setSpoifyAppRemote(mSpotifyAppRemote);
+        mLocalUser = new LocalUser(this,mAuth.getUid(),mAccessToken);
+        mLocalUser.setSpoifyAppRemote();
         Intent intent = new Intent(MainActivity.this, RadarActivity.class);
-        intent.putExtra("user_id", obtenerUserId());
+        intent.putExtra("user_id", mAuth.getUid());
         startActivity(intent);
         finish();
     }
@@ -194,70 +214,59 @@ public class MainActivity extends AppCompatActivity {
         return sharedPreferences.getString("user_id", null);
     }
 
-    // Conecta al usuario a la API de Spotify App Remote
-    private void conectarSpotifyAppRemote() {
-        String token = obtenerAccessToken();
-        if (token != null) {
-            ConnectionParams parametrosConexion = new ConnectionParams.Builder(CLIENT_ID)
-                    .setRedirectUri(REDIRECT_URI)
-                    .build();
-            SpotifyAppRemote.connect(this, parametrosConexion, new Connector.ConnectionListener() {
-                @Override
-                public void onConnected(SpotifyAppRemote spotifyAppRemote) {
-                    mSpotifyAppRemote = spotifyAppRemote;
-                    Log.d("MainActivity", "¡Conectado! ¡Genial!");
-                    //mFirebaseService.startRealtimeUpdates(obtenerUserId());
-                    String trackUri = "spotify:track:7pZlVg1ppWVhUGzR1N4Fwb?si=11303f15524e4ff0 "; // Reemplaza esto con el URI de la canción que deseas reproducir
-                    playTrack(trackUri);
-                    showSplashScreen(mSpotifyAppRemote);
-                    mSpotifyAppRemote.getPlayerApi().subscribeToPlayerState().setEventCallback(playerState -> {
-                        final Track track = playerState.track;
-                        if (track != null) {
-                            // Haz algo con la información de la canción actual
-                        }
-                    });
-
-                }
-
-                @Override
-                public void onFailure(Throwable error) {
-                    Log.e("MainActivity", "Error al conectar con SpotifyAppRemote", error);
-                }
-            });
-        }
-    }
-
     public static String getToken(){
         return mAccessToken;
     }
 
     // Borra todas las preferencias compartidas al cerrar la aplicación
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-        SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.clear();
-        editor.apply();
-        CookieManager.getInstance().removeAllCookies(null);
-        CookieManager.getInstance().flush();
-        //abrirPaginaInicioSesionSpotify()
-    }
 
     public SharedPreferences getSharedPreferences() {
         return getSharedPreferences("preferencias", MODE_PRIVATE);
     }
 
-    private void abrirPaginaInicioSesionSpotify() {
-        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://accounts.spotify.com/logout"));
-        startActivity(intent);
-    }
 
     public Context getContext() {
         return mContext;
     }
 
-    private void playTrack(String trackUri) {
-        mSpotifyAppRemote.getPlayerApi().play(trackUri);
+    private void authUser() {
+        // Se crea una instancia de AuthorizationRequest con los datos de nuestra aplicación y la URI de redireccionamiento
+        AuthorizationRequest.Builder builder = new AuthorizationRequest.Builder(
+                CLIENT_ID,
+                TOKEN,
+                REDIRECT_URI
+        );
+        builder.setScopes(new String[]{"user-read-private", "playlist-read", "user-library-read", "user-read-currently-playing", "user-read-playback-state", "user-modify-playback-state","user-top-read"});
+        AuthorizationRequest request = builder.build();
+
+        // Se llama al método AuthorizationClient.openLoginActivity() para iniciar la actividad de autenticación de Spotify
+        AuthorizationClient.openLoginActivity(this, REQUEST_CODE, request);
+    }
+
+    protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
+        super.onActivityResult(requestCode, resultCode, intent);
+
+        // Check if result comes from the correct activity
+        if (requestCode == REQUEST_CODE) {
+            AuthorizationResponse response = AuthorizationClient.getResponse(resultCode, intent);
+
+            switch (response.getType()) {
+                // Response was successful and contains auth token
+                case TOKEN:
+                    guardarAccessToken(response.getAccessToken());
+                    guardarEstadoAutenticacion(true);
+                    SpotifyAppRemote.connect(this, parametrosConexion, mConnectionListener);
+                    break;
+
+                // Auth flow returned an error
+                case ERROR:
+                    // Handle error response
+                    break;
+
+                // Most likely auth flow was cancelled
+                default:
+                    // Handle other cases
+            }
+        }
     }
 }

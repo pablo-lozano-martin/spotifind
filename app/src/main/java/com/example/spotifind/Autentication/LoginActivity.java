@@ -2,6 +2,8 @@ package com.example.spotifind.Autentication;
 
 import static android.content.ContentValues.TAG;
 
+import static com.spotify.sdk.android.auth.LoginActivity.REQUEST_CODE;
+
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -84,7 +86,9 @@ public class LoginActivity extends AppCompatActivity {
                     if (task.isSuccessful()) {
                         // Inicio de sesión exitoso en Firebase
                         Log.d(TAG, "signInWithEmail:success");
-                        iniciarAutenticacionSpotify();
+                        // Establecer el resultado antes de finalizar la actividad
+                        setResult(RESULT_OK);
+                        finish();
                     } else {
                         // Si el inicio de sesión falla, mostrar un mensaje al usuario
                         Log.w(TAG, "signInWithEmail:failure", task.getException());
@@ -92,37 +96,5 @@ public class LoginActivity extends AppCompatActivity {
                     }
                 });
     }
-
-    private void iniciarAutenticacionSpotify() {
-        AuthorizationRequest.Builder builder = new AuthorizationRequest.Builder(CLIENT_ID, AuthorizationResponse.Type.TOKEN, Uri.parse(REDIRECT_URI).toString());
-        builder.setScopes(new String[]{"user-read-email","user-read-private", "playlist-read", "user-library-read", "user-read-currently-playing", "user-read-playback-state", "user-modify-playback-state","user-top-read"});
-        builder.setShowDialog(true);
-        AuthorizationRequest request = builder.build();
-        AuthorizationClient.openLoginActivity(this, AUTH_TOKEN_REQUEST_CODE, request);
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        // Manejar el resultado de la autenticación de Spotify
-        if (requestCode == AUTH_TOKEN_REQUEST_CODE) {
-            AuthorizationResponse response = AuthorizationClient.getResponse(resultCode, data);
-            if (response.getType() == AuthorizationResponse.Type.TOKEN) {
-                // Autenticación exitosa de Spotify
-                Log.d(TAG, "onActivityResult: Autenticación de Spotify exitosa");
-                Toast.makeText(LoginActivity.this, "¡Inicio de sesión exitoso!", Toast.LENGTH_SHORT).show();
-                Intent resultIntent = new Intent();
-                resultIntent.putExtra("access_token", response.getAccessToken());
-                // Establecer el resultado antes de finalizar la actividad
-                setResult(RESULT_OK, resultIntent);
-                finish(); // finalizar la actividad actual
-            } else {
-                // Si la autenticación de Spotify falla, mostrar un mensaje al usuario
-                Log.w(TAG, "onActivityResult: Autenticación de Spotify fallida");
-                Toast.makeText(LoginActivity.this, "Autenticación de Spotify fallida.", Toast.LENGTH_SHORT).show();
-            }
-        }
-    }
-
 }
 

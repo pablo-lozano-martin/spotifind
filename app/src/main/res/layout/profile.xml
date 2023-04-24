@@ -12,7 +12,6 @@
         android:layout_height="match_parent"
         tools:layout_editor_absoluteX="1dp">
 
-
         <Button
             android:id="@+id/buttonSpotify"
             android:layout_width="wrap_content"

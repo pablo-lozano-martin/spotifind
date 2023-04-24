@@ -72,6 +72,8 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
     private FirebaseUser currentUser;
     private String userid;
 
+    private Marker userMarker;
+
 
     private AtomicInteger usersToProcess;
 
@@ -102,14 +104,19 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
         nearUsers = new ArrayList<>();
 
         getUserLocation(userid,new LocationListener() {
+            private double maxLongitude = 100;
+            private double maxLatitude = 100;
+            private double minLongitude = -100;
+            private double minLatitude= -100;
+
+
             @Override
             public void onLocationReceived(LatLng location) {
-                // Llama a getNearUsers con la ubicación recibida
-                getNearUsers(3000);
             }
 
             @Override
-            public void onLocationChanged(Location location) {}
+            public void onLocationChanged(Location location) {
+            }
 
             @Override
             public void onStatusChanged(String provider, int status, Bundle extras) {}
@@ -242,6 +249,13 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
         locationData.put("latitude", lastKnownLatLng.latitude);
         locationData.put("longitude", lastKnownLatLng.longitude);
         userLocationsRef.child(this.userid).child("location").setValue(locationData);
+
+        // Mover la cámara hacia la nueva ubicación
+        if (mMap != null) {
+            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(lastKnownLatLng, 15));
+            getNearUsers(3000);
+        }
+
     }
 
 
@@ -264,28 +278,28 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
     private void addMarkers(List<Pair<LatLng, String>> nearUsers) {
         // Limpia todos los marcadores antiguos del mapa
         mMap.clear();
-
         AtomicInteger usersProcessed = new AtomicInteger(0);
         AtomicReference<Double> nearestUserDistance = new AtomicReference<>(Double.MAX_VALUE);
         AtomicReference<LatLng> nearestUserLatLng = new AtomicReference<>(null);
 
         for (Pair<LatLng, String> userPair : nearUsers) {
-            LatLng userLatLng = userPair.first;
-           String userid = userPair.second;
 
-            Marker marker = mMap.addMarker(new MarkerOptions()
-                    .position(userLatLng)
-                    .visible(true)); // No se establece el título, pero el marcador es visible
-            marker.setTag(userid); // Asociar el ID del usuario con el marcador usando setTag()
+            if(userPair.second!=userid) {
+                    LatLng userLatLng = userPair.first;
+                    String userid = userPair.second;
+                    Marker marker = mMap.addMarker(new MarkerOptions()
+                            .position(userLatLng)
+                            .visible(true)); // No se establece el título, pero el marcador es visible
+                    marker.setTag(userid); // Asociar el ID del usuario con el marcador usando setTag()
 
-
-            // Actualiza la ubicación del usuario más cercano
-            float[] results = new float[1];
-            Location.distanceBetween(mMap.getCameraPosition().target.latitude, mMap.getCameraPosition().target.longitude,
-                    userLatLng.latitude, userLatLng.longitude, results);
-            if (results[0] < nearestUserDistance.get()) {
-                nearestUserLatLng.set(userLatLng);
-                nearestUserDistance.set((double) results[0]);
+                    // Actualiza la ubicación del usuario más cercano
+                    float[] results = new float[1];
+                    Location.distanceBetween(mMap.getCameraPosition().target.latitude, mMap.getCameraPosition().target.longitude,
+                            userLatLng.latitude, userLatLng.longitude, results);
+                    if (results[0] < nearestUserDistance.get()) {
+                        nearestUserLatLng.set(userLatLng);
+                        nearestUserDistance.set((double) results[0]);
+                    }
             }
 
             // Verifica si se han procesado todos los usuarios
@@ -365,14 +379,6 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
             public void onProviderDisabled(String provider) {}
         });
     }
-
-
-
-
-
-
-
-
     private void getUserInfoAndAddToNearUsers(String uid) {
         DatabaseReference usersRef = FirebaseDatabase.getInstance().getReference("userLocations");
         DatabaseReference userLocationRef = usersRef.child(uid).child("l");
@@ -407,14 +413,7 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
                 Log.e("LocalUser", "Error al obtener la ubicación del usuario", databaseError.toException());
             }
         });
-    }
-
-
-
-
-
-
-    private void removeUserFromNearUsers(String key) {
+    }private void removeUserFromNearUsers(String key) {
         Iterator<Pair<LatLng, String>> iterator = nearUsers.iterator();
         while (iterator.hasNext()) {
             Pair<LatLng,String> userPair = iterator.next();
@@ -424,9 +423,7 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
                 return;
             }
         }
-    }
-
-    private void updateUserLocationInNearUsers(String key, LatLng location) {
+    }private void updateUserLocationInNearUsers(String key, LatLng location) {
         for (Pair<LatLng, String> userPair : nearUsers) {
             String userId = userPair.second;
             if (userId.equals(key)) {
@@ -437,8 +434,6 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
             }
         }
     }
-
-
     @Override
     public void onInfoWindowClick(Marker marker) {
         LocalUser localUser = (LocalUser) marker.getTag();
@@ -459,7 +454,6 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
 
         void onProviderDisabled(String provider);
     }
-
     private void getUserLocation(String userId, final LocationListener listener) {
         DatabaseReference userLocationRef = FirebaseDatabase.getInstance().getReference("userLocations");
         GeoFire geoFire = new GeoFire(userLocationRef);
@@ -481,8 +475,6 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
             }
         });
     }
-
-
     public void setLastKnownLatLng(LatLng latLng) {
 
             DatabaseReference userLocationsRef = FirebaseDatabase.getInstance().getReference("userLocations");
@@ -502,27 +494,4 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
 
         this.lastKnownLatLng = latLng;
     }
-
-
-
-
-    private void simulateUserMovement() {
-        final LatLng startPosition = new LatLng(-34, 151); // Ubicación inicial del usuario
-        final Handler handler = new Handler();
-        final long updateInterval = 5000; // Intervalo de actualización de la ubicación en milisegundos
-        final float stepDistance = 0.001f; // Distancia en grados de latitud/longitud que se mueve el usuario en cada actualización
-
-        handler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                double lat = startPosition.latitude + Math.random() * stepDistance * 2 - stepDistance;
-                double lng = startPosition.longitude + Math.random() * stepDistance * 2 - stepDistance;
-                LatLng newPosition = new LatLng(lat, lng);
-                // Actualiza la posición del usuario en el mapa
-                // Repite la animación cada 5 segundos
-                handler.postDelayed(this, updateInterval);
-            }
-        }, updateInterval);
-    }
-
 }

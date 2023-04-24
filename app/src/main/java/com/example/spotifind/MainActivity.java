@@ -71,6 +71,7 @@ public class MainActivity extends AppCompatActivity {
                         if (data != null) {
                             guardarEstadoAutenticacion(true);
                             guardarAccessToken(data.getStringExtra("access_token"));
+                            Log.i("Token",data.getStringExtra("access_token"));
                             guardarUserId(mAuth.getUid());
                             conectarSpotifyAppRemote();
                         } else {
@@ -108,6 +109,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void run() {
                 initializeLocalUser();
+                obtenerAccessToken();
                 Intent intent = new Intent(MainActivity.this, RadarActivity.class);
                 intent.putExtra("user_id", obtenerUserId());
                 startActivity(intent);
@@ -217,22 +219,6 @@ public class MainActivity extends AppCompatActivity {
                     Log.e("MainActivity", "Error al conectar con SpotifyAppRemote", error);
                 }
             });
-        }
-    }
-
-    // Procesa el resultado de la actividad de inicio de sesión
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-
-        if (requestCode == LOGIN_ACTIVITY_REQUEST_CODE) {
-            if (resultCode == RESULT_OK) {
-                guardarEstadoAutenticacion(true);
-                guardarAccessToken(data.getStringExtra("access_token"));
-                guardarUserId(mAuth.getUid());
-            } else {
-                // Si no se obtiene el token de acceso, manejar el error
-                Toast.makeText(MainActivity.this, "Error al obtener el token de acceso de Spotify.", Toast.LENGTH_SHORT).show();
-            }
         }
     }
 

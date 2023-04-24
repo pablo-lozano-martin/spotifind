@@ -244,12 +244,7 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
         Toast.makeText(this, "Ubicación cambiada", Toast.LENGTH_SHORT).show();
         this.minLatitude = location.getLatitude() - 0.5; this.maxLatitude = location.getLatitude() + 0.5;
         this.minLongitude = location.getLongitude() - 0.5; this.maxLongitude = location.getLongitude() + 0.5;
-        DatabaseReference userLocationsRef = FirebaseDatabase.getInstance().getReference("userLocations");
         Map<String, Object> locationData = new HashMap<>();
-        locationData.put("latitude", lastKnownLatLng.latitude);
-        locationData.put("longitude", lastKnownLatLng.longitude);
-        userLocationsRef.child(this.userid).child("location").setValue(locationData);
-
         // Mover la cámara hacia la nueva ubicación
         if (mMap != null) {
             mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(lastKnownLatLng, 15));
@@ -284,7 +279,7 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
 
         for (Pair<LatLng, String> userPair : nearUsers) {
 
-            if(userPair.second!=userid) {
+            if(!userPair.second.equals(userid)) {
                     LatLng userLatLng = userPair.first;
                     String userid = userPair.second;
                     Marker marker = mMap.addMarker(new MarkerOptions()

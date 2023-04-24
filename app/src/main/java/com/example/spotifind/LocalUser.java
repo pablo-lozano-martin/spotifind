@@ -56,7 +56,6 @@ public class LocalUser {
     private Location currentLocation;
 
     Context context;
-    String mAccessToken;
     // Constructor de la clase
 
     public LocalUser() {
@@ -69,11 +68,9 @@ public class LocalUser {
         this.context = context;
         // Cargar los datos del usuario desde Firebase
         loadUserDataFromFirebase(uid);
-        sharedPreferences = context.getSharedPreferences("access_token",Context.MODE_PRIVATE);
-        mAccessToken =  sharedPreferences.getString("token", "");
 
         SpotifyService artistSpotifyService = new SpotifyService(
-                mAccessToken,
+                MainActivity.getToken(),
                 "artists",
                 null,
                 new SpotifyService.SpotifyCallback<List<CustomArtist>>() {
@@ -90,7 +87,7 @@ public class LocalUser {
         );
 
         SpotifyService trackSpotifyService = new SpotifyService(
-                mAccessToken,
+                MainActivity.getToken(),
                 "tracks",
                 new SpotifyService.SpotifyCallback<List<CustomTrack>>() {
                     @Override
@@ -191,10 +188,6 @@ public class LocalUser {
 
     public Location getLocation() {
         return this.currentLocation;
-    }
-
-    public String getSpotitoken() {
-        return mAccessToken;
     }
 
     public Track getLastPlayedSong() {
@@ -304,7 +297,6 @@ public class LocalUser {
                 // Actualizar los datos del usuario con los valores obtenidos de Firebase
                 username = snapshot.child("username").getValue(String.class);
                 uid = snapshot.child("uid").getValue(String.class);
-                mAccessToken = snapshot.child("mAccesToken").getValue(String.class);
 
                 GenericTypeIndicator<List<CustomArtist>> artistListType = new GenericTypeIndicator<List<CustomArtist>>() {
                 };

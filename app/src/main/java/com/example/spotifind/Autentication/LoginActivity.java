@@ -93,7 +93,7 @@ public class LoginActivity extends AppCompatActivity {
 
     private void iniciarAutenticacionSpotify() {
         AuthorizationRequest.Builder builder = new AuthorizationRequest.Builder(CLIENT_ID, AuthorizationResponse.Type.TOKEN, Uri.parse(REDIRECT_URI).toString());
-        builder.setScopes(new String[]{"user-read-email"});
+        builder.setScopes(new String[]{"user-read-email","user-read-private", "playlist-read", "user-library-read", "user-read-currently-playing", "user-read-playback-state", "user-modify-playback-state","user-top-read"});
         AuthorizationRequest request = builder.build();
         AuthorizationClient.openLoginActivity(this, AUTH_TOKEN_REQUEST_CODE, request);
     }
@@ -110,7 +110,6 @@ public class LoginActivity extends AppCompatActivity {
                 Toast.makeText(LoginActivity.this, "¡Inicio de sesión exitoso!", Toast.LENGTH_SHORT).show();
                 Intent resultIntent = new Intent();
                 resultIntent.putExtra("access_token", response.getAccessToken());
-
                 // Establecer el resultado antes de finalizar la actividad
                 setResult(RESULT_OK, resultIntent);
                 finish(); // finalizar la actividad actual

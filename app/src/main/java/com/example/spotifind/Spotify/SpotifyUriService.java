@@ -21,6 +21,7 @@ public class SpotifyUriService extends AsyncTask<Pair<String, List<String>>, Voi
 
     private final SpotifyService.SpotifyCallback<List<String>> callback;
 
+
     public SpotifyUriService(SpotifyService.SpotifyCallback<List<String>> callback) {
         this.callback = callback;
     }
@@ -51,7 +52,7 @@ public class SpotifyUriService extends AsyncTask<Pair<String, List<String>>, Voi
 
         Request request = new Request.Builder()
                 .url(url)
-                .addHeader("Authorization", "Bearer " + MainActivity.mAccessToken)
+                .addHeader("Authorization", "Bearer " + MainActivity.getToken())
                 .addHeader("Accept", "application/json")
                 .build();
         try {

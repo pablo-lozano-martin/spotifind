@@ -56,22 +56,24 @@ public class LocalUser {
     private Location currentLocation;
 
     Context context;
-
+    String mAccessToken;
     // Constructor de la clase
 
     public LocalUser() {
     }
+    private SharedPreferences sharedPreferences;
+    public LocalUser(Context context,String uid) {
 
-    public LocalUser(Context context, FirebaseAuth mAuth) {
         friendList = new ArrayList<>();
         nearUsers = new ArrayList<>();
         this.context = context;
-        this.setFirebaseCredentials(mAuth);
         // Cargar los datos del usuario desde Firebase
         loadUserDataFromFirebase(uid);
+        sharedPreferences = context.getSharedPreferences("access_token",Context.MODE_PRIVATE);
+        mAccessToken =  sharedPreferences.getString("token", "");
 
         SpotifyService artistSpotifyService = new SpotifyService(
-                MainActivity.mAccessToken,
+                mAccessToken,
                 "artists",
                 null,
                 new SpotifyService.SpotifyCallback<List<CustomArtist>>() {
@@ -88,7 +90,7 @@ public class LocalUser {
         );
 
         SpotifyService trackSpotifyService = new SpotifyService(
-                MainActivity.mAccessToken,
+                mAccessToken,
                 "tracks",
                 new SpotifyService.SpotifyCallback<List<CustomTrack>>() {
                     @Override
@@ -192,7 +194,7 @@ public class LocalUser {
     }
 
     public String getSpotitoken() {
-        return spotitoken;
+        return mAccessToken;
     }
 
     public Track getLastPlayedSong() {
@@ -302,8 +304,8 @@ public class LocalUser {
                 // Actualizar los datos del usuario con los valores obtenidos de Firebase
                 username = snapshot.child("username").getValue(String.class);
                 uid = snapshot.child("uid").getValue(String.class);
-                spotitoken = snapshot.child("spotitoken").getValue(String.class);
-                // Actualizar los datos de la música del usuario
+                mAccessToken = snapshot.child("mAccesToken").getValue(String.class);
+
                 GenericTypeIndicator<List<CustomArtist>> artistListType = new GenericTypeIndicator<List<CustomArtist>>() {
                 };
                 GenericTypeIndicator<List<CustomTrack>> trackListType = new GenericTypeIndicator<List<CustomTrack>>() {
@@ -328,12 +330,12 @@ public class LocalUser {
                 };
                 List<String> friendUids = snapshot.child("friendList").getValue(friendListType);
                 friendList.clear();
-                if(friendUids!=null){
+                if (friendUids != null) {
                     for (String friendUid : friendUids) {
                         // Cargar los datos de cada amigo desde Firebase y agregarlos a la lista de amigos
                         loadUserDataFromFirebase(friendUid);
                     }
-                    }
+                }
                 // Actualizar la imagen de perfil del usuario
                 String base64Image = snapshot.child("profileImage").getValue(String.class);
                 if (base64Image != null && !base64Image.isEmpty()) {

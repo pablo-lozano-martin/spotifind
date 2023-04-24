@@ -26,6 +26,8 @@ public class SpotifyService extends AsyncTask<Void, Void, List<CustomTrack>> {
     private final SpotifyCallback<List<CustomTrack>> callback;
     private final SpotifyCallback<List<CustomArtist>> artistCallback;
 
+    private final String token;
+
     private Gson gson;
     public interface SpotifyCallback<T> {
         void onSuccess(T result);
@@ -33,6 +35,7 @@ public class SpotifyService extends AsyncTask<Void, Void, List<CustomTrack>> {
     }
 
     public SpotifyService(String accessToken, String queryType, SpotifyCallback<List<CustomTrack>> callback, SpotifyCallback<List<CustomArtist>> artistCallback) {
+        this.token=accessToken;
         this.queryType = queryType;
         this.callback = callback;
         this.artistCallback = artistCallback;
@@ -46,7 +49,7 @@ public class SpotifyService extends AsyncTask<Void, Void, List<CustomTrack>> {
 
         Request request = new Request.Builder()
                 .url(BASE_URL + "me/top/" + queryType + "?limit=5")
-                .addHeader("Authorization", "Bearer " + MainActivity.mAccessToken)
+                .addHeader("Authorization", "Bearer " + MainActivity.getToken())
                 .addHeader("Accept", "application/json")
                 .addHeader("Content-Type", "application/json")
                 .build();
@@ -105,7 +108,7 @@ public class SpotifyService extends AsyncTask<Void, Void, List<CustomTrack>> {
             if (artistCallback != null) {
                 artistCallback.onFailure(new Exception("Error al obtener los Top " + queryType));
             }
-            Log.d("SpotifyService", "Requesting Top " + MainActivity.mAccessToken);
+            Log.d("SpotifyService", "Requesting Top " + MainActivity.getToken());
         }
     }
 

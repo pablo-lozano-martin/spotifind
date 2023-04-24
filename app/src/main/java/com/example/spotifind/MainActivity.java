@@ -3,10 +3,12 @@ package com.example.spotifind;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.util.Log;
+import android.webkit.CookieManager;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -234,10 +236,17 @@ public class MainActivity extends AppCompatActivity {
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.clear();
         editor.apply();
+        CookieManager.getInstance().removeAllCookies(null);
+        CookieManager.getInstance().flush();
     }
 
     public SharedPreferences getSharedPreferences() {
         return getSharedPreferences("preferencias", MODE_PRIVATE);
+    }
+
+    private void abrirPaginaInicioSesionSpotify() {
+        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://accounts.spotify.com/logout"));
+        startActivity(intent);
     }
 
     public Context getContext() {

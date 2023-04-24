@@ -2,13 +2,17 @@ package com.example.spotifind.radar;
 
 
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
+import android.provider.Settings;
 import android.util.Log;
 import android.util.Pair;
 import android.widget.Toast;
@@ -74,6 +78,7 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
 
     private Marker userMarker;
 
+    private HashMap<String, Marker> marcadoresUsuarios;
 
     private AtomicInteger usersToProcess;
 
@@ -102,7 +107,7 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
         usersToProcess = new AtomicInteger(0);
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         nearUsers = new ArrayList<>();
-
+        marcadoresUsuarios = new HashMap<>();
         getUserLocation(userid,new LocationListener() {
             private double maxLongitude = 100;
             private double maxLatitude = 100;
@@ -139,6 +144,12 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
             // Permission has already been granted
             // Do something with the location
             // Get the LocationManager
+            // Verificar si la localización está activada
+            boolean isLocationEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+            if (!isLocationEnabled) {
+                showLocationSettingsDialog();
+            }
+
             SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                     .findFragmentById(R.id.map);
             mapFragment.getMapAsync(this);
@@ -244,7 +255,6 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
         Toast.makeText(this, "Ubicación cambiada", Toast.LENGTH_SHORT).show();
         this.minLatitude = location.getLatitude() - 0.5; this.maxLatitude = location.getLatitude() + 0.5;
         this.minLongitude = location.getLongitude() - 0.5; this.maxLongitude = location.getLongitude() + 0.5;
-        Map<String, Object> locationData = new HashMap<>();
         // Mover la cámara hacia la nueva ubicación
         if (mMap != null) {
             mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(lastKnownLatLng, 15));
@@ -279,22 +289,34 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
 
         for (Pair<LatLng, String> userPair : nearUsers) {
 
-            if(!userPair.second.equals(userid)) {
-                    LatLng userLatLng = userPair.first;
-                    String userid = userPair.second;
-                    Marker marker = mMap.addMarker(new MarkerOptions()
-                            .position(userLatLng)
-                            .visible(true)); // No se establece el título, pero el marcador es visible
-                    marker.setTag(userid); // Asociar el ID del usuario con el marcador usando setTag()
+            if (!userPair.second.equals(userid)) {
+                LatLng userLatLng = userPair.first;
+                String userId = userPair.second;
 
-                    // Actualiza la ubicación del usuario más cercano
-                    float[] results = new float[1];
-                    Location.distanceBetween(mMap.getCameraPosition().target.latitude, mMap.getCameraPosition().target.longitude,
-                            userLatLng.latitude, userLatLng.longitude, results);
-                    if (results[0] < nearestUserDistance.get()) {
-                        nearestUserLatLng.set(userLatLng);
-                        nearestUserDistance.set((double) results[0]);
+                // Eliminar el marcador anterior del usuario, si existe
+                if (marcadoresUsuarios.containsKey(userId)) {
+                    Marker marcadorAnterior = marcadoresUsuarios.get(userId);
+                    if (marcadorAnterior != null) {
+                        marcadorAnterior.remove();
                     }
+                    marcadoresUsuarios.remove(userId);
+                }
+
+                // Agregar el nuevo marcador y almacenarlo en el HashMap
+                Marker marker = mMap.addMarker(new MarkerOptions()
+                        .position(userLatLng)
+                        .visible(true)); // No se establece el título, pero el marcador es visible
+                marker.setTag(userId); // Asociar el ID del usuario con el marcador usando setTag()
+                marcadoresUsuarios.put(userId, marker);
+
+                // Actualiza la ubicación del usuario más cercano
+                float[] results = new float[1];
+                Location.distanceBetween(mMap.getCameraPosition().target.latitude, mMap.getCameraPosition().target.longitude,
+                        userLatLng.latitude, userLatLng.longitude, results);
+                if (results[0] < nearestUserDistance.get()) {
+                    nearestUserLatLng.set(userLatLng);
+                    nearestUserDistance.set((double) results[0]);
+                }
             }
 
             // Verifica si se han procesado todos los usuarios
@@ -306,6 +328,7 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
             }
         }
     }
+
 
     public void getNearUsers(double radiusInMeters) {
         DatabaseReference userLocationsRef = FirebaseDatabase.getInstance().getReference("userLocations");
@@ -488,5 +511,25 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
             });
 
         this.lastKnownLatLng = latLng;
+    }
+
+    private void showLocationSettingsDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Localización desactivada");
+        builder.setMessage("Por favor, activa la localización para usar esta función.");
+        builder.setPositiveButton("Configuración de localización", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                startActivity(intent);
+            }
+        });
+        builder.setNegativeButton("Cancelar", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+            }
+        });
+        builder.create().show();
     }
 }

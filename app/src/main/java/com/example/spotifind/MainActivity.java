@@ -238,6 +238,7 @@ public class MainActivity extends AppCompatActivity {
         editor.apply();
         CookieManager.getInstance().removeAllCookies(null);
         CookieManager.getInstance().flush();
+        //abrirPaginaInicioSesionSpotify()
     }
 
     public SharedPreferences getSharedPreferences() {

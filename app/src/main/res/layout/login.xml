@@ -50,7 +50,7 @@
 
             <EditText
                 android:id="@+id/etEmail"
-                android:layout_width="379dp"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:background="@drawable/outline_black"
                 android:ems="10"

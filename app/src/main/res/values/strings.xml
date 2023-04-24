@@ -5,4 +5,6 @@
     <string name="prompt_email">example@mail.com</string>
     <string name="prompt_password">examplepassword</string>
     <string name="close_button_description">Cerrar carta</string>
+    <string name="profile_image">Foto de perfil del usuario</string>
+
 </resources>

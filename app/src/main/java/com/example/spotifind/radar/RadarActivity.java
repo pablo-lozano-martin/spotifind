@@ -212,7 +212,7 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
                 userRef.addValueEventListener(new ValueEventListener() { // Cambiado a addListenerForSingleValueEvent
                     @Override
                     public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                        LocalUser user = dataSnapshot.getValue(LocalUser.class);
+                        LocalUser user =  dataSnapshot.getValue(LocalUser.class);
                         if (user != null) {
                             // Mostrar la canción del usuario como título del marcador
                             String userSong = user.getLastPlayedSong().name;

@@ -44,7 +44,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int LOGIN_ACTIVITY_REQUEST_CODE = 1;
 
     private ActivityMainBinding mBinding;
-    private FirebaseAuth mAuth;
+    public static FirebaseAuth mAuth;
     private FirebaseService mFirebaseService;
     private SpotifyAppRemote mSpotifyAppRemote;
     private static String mAccessToken;
@@ -100,6 +100,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onStart() {
+        conectarSpotifyAppRemote();
         super.onStart();
     }
 
@@ -136,7 +137,7 @@ public class MainActivity extends AppCompatActivity {
     // Inicializa los datos del usuario local
     private void initializeLocalUser() {
         mAccessToken = obtenerAccessToken();
-        mLocalUser = new LocalUser(this,mAuth.getUid());
+        mLocalUser = new LocalUser(this,obtenerUserId());
         mLocalUser.setSpoifyAppRemote(mSpotifyAppRemote);
         Intent intent = new Intent(MainActivity.this, RadarActivity.class);
         intent.putExtra("user_id", obtenerUserId());
@@ -205,7 +206,7 @@ public class MainActivity extends AppCompatActivity {
                 public void onConnected(SpotifyAppRemote spotifyAppRemote) {
                     mSpotifyAppRemote = spotifyAppRemote;
                     Log.d("MainActivity", "¡Conectado! ¡Genial!");
-                    mFirebaseService.startRealtimeUpdates(obtenerUserId());
+                    //mFirebaseService.startRealtimeUpdates(obtenerUserId());
                     showSplashScreen();
                     mSpotifyAppRemote.getPlayerApi().subscribeToPlayerState().setEventCallback(playerState -> {
                         final Track track = playerState.track;

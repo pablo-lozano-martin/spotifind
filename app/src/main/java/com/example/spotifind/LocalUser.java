@@ -49,6 +49,14 @@ public class LocalUser {
 
     private Subscription<PlayerState> subscription;
 
+    public Context getContext() {
+        return context;
+    }
+
+    public void setContext(Context context) {
+        this.context = context;
+    }
+
     private List<LocalUser> friendList;
 
     private List<LocalUser> nearUsers;
@@ -60,12 +68,12 @@ public class LocalUser {
 
     public LocalUser() {
     }
-    private SharedPreferences sharedPreferences;
-    public LocalUser(Context context,String uid) {
+    public LocalUser(Context context, String uid) {
 
         friendList = new ArrayList<>();
         nearUsers = new ArrayList<>();
         this.context = context;
+        this.uid=uid;
         // Cargar los datos del usuario desde Firebase
         loadUserDataFromFirebase(uid);
 
@@ -288,7 +296,6 @@ public class LocalUser {
         return sharedPreferences.getString(key, null);
     }
 
-
     public void loadUserDataFromFirebase(String userId) {
         DatabaseReference userRef = FirebaseDatabase.getInstance().getReference().child("users").child(userId);
         userRef.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -296,8 +303,6 @@ public class LocalUser {
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 // Actualizar los datos del usuario con los valores obtenidos de Firebase
                 username = snapshot.child("username").getValue(String.class);
-                uid = snapshot.child("uid").getValue(String.class);
-
                 GenericTypeIndicator<List<CustomArtist>> artistListType = new GenericTypeIndicator<List<CustomArtist>>() {
                 };
                 GenericTypeIndicator<List<CustomTrack>> trackListType = new GenericTypeIndicator<List<CustomTrack>>() {

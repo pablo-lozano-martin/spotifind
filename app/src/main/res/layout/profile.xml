@@ -22,7 +22,7 @@
             android:layout_marginEnd="132dp"
             android:layout_marginBottom="6dp"
             android:background="#3366CC"
-            android:text="SPOTIFY"
+            android:text="ABRIR EN SPOTIFY"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"

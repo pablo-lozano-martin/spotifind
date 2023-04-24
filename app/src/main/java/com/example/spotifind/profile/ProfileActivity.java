@@ -11,10 +11,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.spotifind.CardAdapter;
 import com.example.spotifind.R;
-import com.example.spotifind.LocalUser;
-
-import com.example.spotifind.SongAdapter;
+import com.example.spotifind.Spotify.CustomArtist;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +25,6 @@ public class ProfileActivity extends AppCompatActivity {
     private ImageButton editButton;
     private Button spotifyButton;
     private RecyclerView recyclerView;
-    private UserProfileAdapter adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,15 +35,16 @@ public class ProfileActivity extends AppCompatActivity {
         userImage = findViewById(R.id.imageView);
         editButton = findViewById(R.id.buttonEdit);
         spotifyButton = findViewById(R.id.buttonSpotify);
-        recyclerView = findViewById(R.id.recycler_view);
+        recyclerView = findViewById(R.id.recyclerViewTop5Artists);
 
         // Lista de usuarios para el carrusel, reemplazar con datos reales
-        List<LocalUser> userList = new ArrayList<>();
+        List<CustomArtist> artistList = new ArrayList<>();
 
         // Configurar el adaptador y el RecyclerView
-        adapter = new UserProfileAdapter(userList);
-        recyclerView.setAdapter(adapter);
         recyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
+
+        CardAdapter cardAdapter = new CardAdapter(artistList, null, this);
+        recyclerView.setAdapter(cardAdapter);
 
         // Listener botón editar el perfil
         editButton.setOnClickListener(new View.OnClickListener() {

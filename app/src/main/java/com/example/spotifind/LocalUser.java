@@ -38,182 +38,92 @@ import java.util.List;
 
 public class LocalUser {
 
+    private static final String SPOTIFY_AUTH_TOKEN_KEY = null;
+
     private String username;
-    private String uid;
-
-    private String spotitoken;
-    private List<CustomArtist> top5Artists;
-    private Track lastPlayedSong;
-    private List<CustomTrack> top5Songs;
-    private FirebaseUser currentUser;
-
-    private SpotifyAppRemote mspotifyAppRemote;
 
     private String email;
 
     private String fcmToken;
-
-    private Subscription<PlayerState> subscription;
-
+    private String uid;
+    private List<CustomArtist> top5Artists;
+    private Track lastPlayedSong;
+    private List<CustomTrack> top5Songs;
     public Context getContext() {
         return context;
     }
-
     public void setContext(Context context) {
         this.context = context;
     }
+    //private List<LocalUser> friendList;
 
-    private List<LocalUser> friendList;
+    private String spotitoken;
 
-    private List<LocalUser> nearUsers;
+    private Context context;
 
-    private List<String> notification;
+    private SharedPreferences cache;
 
-    private Location currentLocation;
-
-    Context context;
-    // Constructor de la clase
-
-    public LocalUser() {
+    public LocalUser(){
     }
 
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public String getSpotitoken() {
-        return spotitoken;
-    }
-
-    public void setSpotitoken(String spotitoken) {
-        this.spotitoken = spotitoken;
-    }
-
-    public FirebaseUser getCurrentUser() {
-        return currentUser;
-    }
-
-    public void setCurrentUser(FirebaseUser currentUser) {
-        this.currentUser = currentUser;
-    }
-
-    public SpotifyAppRemote getMspotifyAppRemote() {
-        return mspotifyAppRemote;
-    }
-
-    public void setMspotifyAppRemote(SpotifyAppRemote mspotifyAppRemote) {
-        this.mspotifyAppRemote = mspotifyAppRemote;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getFcmToken() {
-        return fcmToken;
-    }
-
-    public void setFcmToken(String fcmToken) {
-        this.fcmToken = fcmToken;
-    }
-
-    public Subscription<PlayerState> getSubscription() {
-        return subscription;
-    }
-
-    public void setSubscription(Subscription<PlayerState> subscription) {
-        this.subscription = subscription;
-    }
-
-    public void setFriendList(List<LocalUser> friendList) {
-        this.friendList = friendList;
-    }
-
-    public List<LocalUser> getNearUsers() {
-        return nearUsers;
-    }
-
-    public void setNearUsers(List<LocalUser> nearUsers) {
-        this.nearUsers = nearUsers;
-    }
-
-    public List<String> getNotification() {
-        return notification;
-    }
-
-    public void setNotification(List<String> notification) {
-        this.notification = notification;
-    }
-
-    public Location getCurrentLocation() {
-        return currentLocation;
-    }
-
-    public void setCurrentLocation(Location currentLocation) {
-        this.currentLocation = currentLocation;
-    }
-
-    public LocalUser(Context context, String uid, String spotitoken) {
-
-        friendList = new ArrayList<>();
-        nearUsers = new ArrayList<>();
+    public LocalUser(DataSnapshot dataSnapshot, Context context) {
         this.context = context;
-        this.spotitoken=spotitoken;
-        setUid(uid);
-        // Cargar los datos del usuario desde Firebase
+        if (dataSnapshot.hasChild("username")) {
+            setUsername(dataSnapshot.child("username").getValue(String.class));
+        }
 
+        if (dataSnapshot.hasChild("email")) {
+            setEmail(dataSnapshot.child("email").getValue(String.class));
+        }
+
+        if (dataSnapshot.hasChild("fcmToken")) {
+            setFcmToken(dataSnapshot.child("fcmToken").getValue(String.class));
+        }
+
+        if (dataSnapshot.hasChild("top5Artists")) {
+            top5Artists = new ArrayList<>();
+            for (DataSnapshot artistSnapshot : dataSnapshot.child("top5Artists").getChildren()) {
+                CustomArtist artist = artistSnapshot.getValue(CustomArtist.class);
+                top5Artists.add(artist);
+            }
+        }
+
+        if (dataSnapshot.hasChild("top5Songs")) {
+            top5Songs = new ArrayList<>();
+            for (DataSnapshot songSnapshot : dataSnapshot.child("top5Songs").getChildren()) {
+                CustomTrack track = songSnapshot.getValue(CustomTrack.class);
+                top5Songs.add(track);
+            }
+        }
+        getSpotifyStats();
+    }
+
+
+    public LocalUser(Context context) {
+        //friendList = new ArrayList<>();
+        this.context = context;
+        this.spotitoken= getDataFromCache(context, "access_token");
+        context.getSharedPreferences("preferencias", Context.MODE_PRIVATE);
+        getSpotifyAuthToken(context);
+
+        if (context != null) {
+            cache = context.getSharedPreferences("preferencias", Context.MODE_PRIVATE);
+            initializeDataFromCache();
+            // Tu código aquí
+        } else {
+           getDataFromFirebase();
+        }
 
         String topArtistsJson = getDataFromCache(context, "TOP_ARTISTS");
         String topTracksJson = getDataFromCache(context, "TOP_TRACKS");
-
         if (topArtistsJson != null && topTracksJson != null) {
             Type artistListType = new TypeToken<List<CustomArtist>>(){}.getType();
             top5Artists = new Gson().fromJson(topArtistsJson, artistListType);
             Type trackListType = new TypeToken<List<CustomTrack>>(){}.getType();
             top5Songs = new Gson().fromJson(topTracksJson, trackListType);
         }
-
-        else {
-            SpotifyService artistSpotifyService = new SpotifyService(
-                    spotitoken,
-                    "artists",
-                    null,
-                    new SpotifyService.SpotifyCallback<List<CustomArtist>>() {
-                        @Override
-                        public void onSuccess(List<CustomArtist> result) {
-                            updateTop5Artists(result);
-                        }
-
-                        @Override
-                        public void onFailure(Throwable throwable) {
-                            Log.e("LocalUser", "Error al obtener los Top Artistas", throwable);
-                        }
-                    }
-            );
-
-            SpotifyService trackSpotifyService = new SpotifyService(
-                    spotitoken,
-                    "tracks",
-                    new SpotifyService.SpotifyCallback<List<CustomTrack>>() {
-                        @Override
-                        public void onSuccess(List<CustomTrack> result) {
-                            updateTop5Tracks(result);
-                        }
-
-                        @Override
-                        public void onFailure(Throwable throwable) {
-                            Log.e("LocalUser", "Error al obtener los Top Tracks", throwable);
-                        }
-                    },
-                    null
-            );
-
-            artistSpotifyService.execute();
-            trackSpotifyService.execute();
+        else{
+            getSpotifyStats();
         }
     }
 
@@ -258,7 +168,6 @@ public class LocalUser {
             trackPairs.add(new CustomTrack(track.getId(), track.getName(), track.getUri()));
             trackIds.add(track.getId());
         }
-
         SpotifyUriService albumImageUriService = new SpotifyUriService(new SpotifyService.SpotifyCallback<List<String>>() {
             @Override
             public void onSuccess(List<String> result) {
@@ -279,30 +188,21 @@ public class LocalUser {
         albumImageUriService.execute(new Pair<>("tracks", trackIds));
     }
 
+//    public void addFriend(LocalUser friend) {
+//        friendList.add(friend);
+//    }
+//
+//    public void removeFriend(LocalUser friend) {
+//        friendList.remove(friend);
+//    }
+//
+//    public List<LocalUser> getFriendList() {
+//        return friendList;
+//    }
 
-    public void addFriend(LocalUser friend) {
-        friendList.add(friend);
-    }
-
-    public void removeFriend(LocalUser friend) {
-        friendList.remove(friend);
-    }
-
-    public List<LocalUser> getFriendList() {
-        return friendList;
-    }
-
-
-    public String getUsername() {
-        return username;
-    }
 
     public String getUid() {
         return uid;
-    }
-
-    public Location getLocation() {
-        return this.currentLocation;
     }
 
     public Track getLastPlayedSong() {
@@ -352,25 +252,163 @@ public class LocalUser {
         }
     }
 
-
-    // Save user data to Firebase Realtime Database
-
-    public void addFriend(String userId){
-        DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference("users");
-        Log.d("LocalUser", "User saved to Firebase Realtime Database");
-    }
-
     private void saveDataToCache(Context context, String key, String jsonData) {
-        SharedPreferences sharedPreferences = context.getSharedPreferences("SPOTIFIND_CACHE", Context.MODE_PRIVATE);
+        SharedPreferences sharedPreferences = context.getSharedPreferences("preferencias", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putString(key, jsonData);
         editor.apply();
     }
 
     private String getDataFromCache(Context context, String key) {
-        SharedPreferences sharedPreferences = context.getSharedPreferences("SPOTIFIND_CACHE", Context.MODE_PRIVATE);
+        SharedPreferences sharedPreferences = context.getSharedPreferences("preferencias", Context.MODE_PRIVATE);
         return sharedPreferences.getString(key, null);
     }
 
+    public String getSpotifyAuthToken(Context context) {
+        SharedPreferences sharedPreferences = context.getSharedPreferences("preferencias", Context.MODE_PRIVATE);
+        return sharedPreferences.getString("access_token", null);
+    }
 
+    public void setUsername(String username) {
+        this.username = username;
+        String jsonData = new Gson().toJson(username);
+        saveDataToCache(this.context, "username", jsonData);
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+        String jsonData = new Gson().toJson(email);
+        saveDataToCache(this.context, "email", jsonData);
+    }
+
+    public String getFcmToken() {
+        return fcmToken;
+    }
+
+    public void setFcmToken(String fcmToken) {
+        this.fcmToken = fcmToken;
+        String jsonData = new Gson().toJson(fcmToken);
+        saveDataToCache(this.context, "fcmToken", jsonData);
+    }
+
+    /*public void setFriendList(List<LocalUser> friendList) {
+        this.friendList = friendList;
+        String jsonData = new Gson().toJson(friendList);
+        saveDataToCache(this.context, "friendList", jsonData);
+    }*/
+    private void initializeDataFromCache() {
+        String uid = getDataFromCache(context, "user_id");
+        String username = getDataFromCache(context, "username");
+        String email = getDataFromCache(context, "email");
+        String fcmToken = getDataFromCache(context, "fcmToken");
+        String friendListJson = getDataFromCache(context, "friendList");
+
+        if (username != null) {
+            this.username = new Gson().fromJson(username, String.class);
+        }
+
+        if (email != null) {
+            this.email = new Gson().fromJson(email, String.class);
+        }
+
+        if (fcmToken != null) {
+            this.fcmToken = new Gson().fromJson(fcmToken, String.class);
+        }
+
+        if (uid != null) {
+            this.uid = new Gson().fromJson(uid, String.class);
+        }
+
+        if (friendListJson != null) {
+            Type friendListType = new TypeToken<List<LocalUser>>(){}.getType();
+            //this.friendList = new Gson().fromJson(friendListJson, friendListType);
+        }
+
+        if (username == null || email == null || fcmToken == null || uid == null || friendListJson == null) {
+            getDataFromFirebase();
+        }
+    }
+
+    private void getDataFromFirebase() {
+        DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference("users").child(this.getUid());
+        ValueEventListener valueEventListener = new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists()) {
+                    LocalUser localUser = new LocalUser(dataSnapshot, context);
+
+                    if (username == null && localUser.getUsername() != null) {
+                        setUsername(localUser.getUsername());
+                    }
+
+                    if (email == null && localUser.getEmail() != null) {
+                        setEmail(localUser.getEmail());
+                    }
+
+                    if (fcmToken == null && localUser.getFcmToken() != null) {
+                        setFcmToken(localUser.getFcmToken());
+                    }
+
+                    // if (friendListJson == null && localUser.getFriendList() != null) {
+                    //     setFriendList(localUser.getFriendList());
+                    // }
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                Log.e("LocalUser", "Error al obtener datos de Firebase", databaseError.toException());
+            }
+        };
+
+        databaseRef.addListenerForSingleValueEvent(valueEventListener);
+    }
+
+    public String getUsername() {
+        return this.username;
+    }
+
+
+    private void getSpotifyStats(){
+        SpotifyService artistSpotifyService = new SpotifyService(
+                spotitoken,
+                "artists",
+                null,
+                new SpotifyService.SpotifyCallback<List<CustomArtist>>() {
+                    @Override
+                    public void onSuccess(List<CustomArtist> result) {
+                        updateTop5Artists(result);
+                    }
+
+                    @Override
+                    public void onFailure(Throwable throwable) {
+                        Log.e("LocalUser", "Error al obtener los Top Artistas", throwable);
+                    }
+                }
+        );
+
+        SpotifyService trackSpotifyService = new SpotifyService(
+                spotitoken,
+                "tracks",
+                new SpotifyService.SpotifyCallback<List<CustomTrack>>() {
+                    @Override
+                    public void onSuccess(List<CustomTrack> result) {
+                        updateTop5Tracks(result);
+                    }
+
+                    @Override
+                    public void onFailure(Throwable throwable) {
+                        Log.e("LocalUser", "Error al obtener los Top Tracks", throwable);
+                    }
+                },
+                null
+        );
+
+        artistSpotifyService.execute();
+        trackSpotifyService.execute();
+    }
 }

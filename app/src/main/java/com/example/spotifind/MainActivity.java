@@ -157,7 +157,6 @@ public class MainActivity extends AppCompatActivity {
                                         String token = task.getResult();
                                         // Save the token to SharedPreferences
                                         saveFcmTokenToFirebase(token);
-                                        authUser();
 
 
                                         // Log and toast
@@ -166,6 +165,7 @@ public class MainActivity extends AppCompatActivity {
                                         //Toast.makeText(MainActivity.this, msg, Toast.LENGTH_SHORT).show();
                                     }
                                 });
+                        authUser();
                         guardarUserId(mAuth.getCurrentUser().getUid());
                         showSplashScreen();
                     } else {
@@ -245,8 +245,7 @@ public class MainActivity extends AppCompatActivity {
 
     // Inicializa los datos del usuario local
     private void initializeLocalUser() {
-        mAccessToken = obtenerAccessToken();
-        mLocalUser = new LocalUser(this, mAuth.getUid(), mAccessToken);
+        mLocalUser = new LocalUser(this);
     }
 
     // Guarda el token de acceso en las preferencias compartidas

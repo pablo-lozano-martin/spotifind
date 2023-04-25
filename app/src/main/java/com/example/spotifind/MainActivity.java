@@ -35,8 +35,11 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.spotify.android.appremote.api.ConnectionParams;
 import com.spotify.android.appremote.api.Connector;
@@ -52,6 +55,7 @@ import com.spotify.sdk.android.auth.AuthorizationResponse;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 public class MainActivity extends AppCompatActivity {
@@ -81,21 +85,40 @@ public class MainActivity extends AppCompatActivity {
     Connector.ConnectionListener mConnectionListener = new Connector.ConnectionListener() {
         @Override
         public void onConnected(SpotifyAppRemote spotifyAppRemote) {
+            // Consultar la última canción reproducida en Firebase
             mSpotifyAppRemote = spotifyAppRemote;
-            // Subscribe to PlayerState
-            mSpotifyAppRemote.getPlayerApi().play("spotify:track:4cOdK2wGLETKBW3PvgPWqT");
+            DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference("users").child(mAuth.getUid());
+            databaseRef.child("lastPlayedSong").addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    Track lastPlayedSong = snapshot.getValue(Track.class);
 
-            mSpotifyAppRemote.getPlayerApi()
-                    .subscribeToPlayerState()
-                    .setEventCallback(playerState -> {
-                        final Track track = playerState.track;
-                        if (track != null) {
-                            DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference("users").child(obtenerUserId());
-                            // Update last played song in Firebase
-                            databaseRef.child("lastPlayedSong").setValue(track);
-                            Log.d("LocalUser", "Last played song updated in Firebase");
-                        }
-                    });
+                    if (lastPlayedSong != null) {
+                        // Reproducir la última canción reproducida en Spotify
+                        mSpotifyAppRemote.getPlayerApi().play(lastPlayedSong.uri);
+                        Log.d("LocalUser", "Reproduciendo la última canción reproducida de Firebase");
+                    } else {
+                        // Reproducir una canción predeterminada en Spotify
+                        mSpotifyAppRemote.getPlayerApi().play("spotify:track:6rqhFgbbKwnb9MLmUQDhG6");
+                        Log.d("LocalUser", "Reproduciendo una canción predeterminada en Firebase");
+                    }
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {
+                    Log.e("LocalUser", "Error al leer el valor de Firebase.", error.toException());
+                }
+            });
+
+            // Suscribirse a los cambios en el estado del reproductor de Spotify
+            mSpotifyAppRemote.getPlayerApi().subscribeToPlayerState().setEventCallback(playerState -> {
+                final Track track = playerState.track;
+                if (track != null) {
+                    // Actualizar la última canción reproducida en Firebase
+                    databaseRef.child("lastPlayedSong").setValue(track);
+                    Log.d("LocalUser", "Última canción reproducida actualizada en Firebase");
+                }
+            });
         }
 
         @Override
@@ -108,7 +131,6 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
-    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mContext = this;
@@ -133,9 +155,9 @@ public class MainActivity extends AppCompatActivity {
 
                                         // Get new FCM registration token
                                         String token = task.getResult();
-
                                         // Save the token to SharedPreferences
                                         saveFcmTokenToFirebase(token);
+                                        authUser();
 
 
                                         // Log and toast
@@ -145,9 +167,9 @@ public class MainActivity extends AppCompatActivity {
                                     }
                                 });
 
-                        authUser();
                         showSplashScreen();
                     } else {
+                        // Handle the case when resultCode is not RESULT_OK
                     }
                 });
 
@@ -169,6 +191,7 @@ public class MainActivity extends AppCompatActivity {
         SpotifyAppRemote.connect(this, parametrosConexion, mConnectionListener);
 
     }
+
 
     @Override
     protected void onResume() {

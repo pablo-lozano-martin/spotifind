@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.util.Log;
+import android.widget.RemoteViews;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
@@ -60,13 +61,16 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         // Crear la notificación y asociar el intent
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_ONE_SHOT);
 
-        // ...
+        // Crea una instancia de RemoteViews utilizando el archivo notification.xml
+        RemoteViews contentView = new RemoteViews(getPackageName(), R.layout.notification);
+        contentView.setTextViewText(R.id.title, title);
+        contentView.setTextViewText(R.id.message, body);
 
         // Configura y muestra la notificación
         NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this, "CHANNEL_ID")
                 .setSmallIcon(R.drawable.ic_launcher_foreground)
-                .setContentTitle(title)
-                .setContentText(body)
+                .setStyle(new NotificationCompat.DecoratedCustomViewStyle())
+                .setCustomContentView(contentView)
                 .setAutoCancel(true)
                 .setContentIntent(pendingIntent);
         NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);

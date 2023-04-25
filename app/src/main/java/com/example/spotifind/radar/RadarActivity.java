@@ -54,6 +54,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.spotify.protocol.types.Track;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -80,6 +81,8 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
     private String userid;
 
     private AtomicInteger usersToProcess;
+
+    private CustomInfoWindowAdapter customInfoWindowAdapter;
 
     SharedPreferences sharedPref;
 
@@ -203,18 +206,21 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
         // Establecer un OnCameraMoveListener para detectar movimientos en el mapa
         mMap.setOnCameraMoveListener(this);
 
-        // Establecer un OnMarkerClickListener para mostrar el título del marcador con el nombre de la canción
         mMap.setOnMarkerClickListener(marker -> {
             String userId = (String) marker.getTag();
-            if (userId != null) {
-                DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(userId);
-                userRef.addValueEventListener(new ValueEventListener() {
+                DatabaseReference lastPlayedSongRef = FirebaseDatabase.getInstance().getReference("users").child(userId).child("lastPlayedSong");
+                lastPlayedSongRef.addValueEventListener(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                        LocalUser user = dataSnapshot.getValue(LocalUser.class);
-                        if (user != null) {
-                            CustomInfoWindowAdapter customInfoWindowAdapter = new CustomInfoWindowAdapter(user);
+                        Track track = dataSnapshot.getValue(Track.class);
+                        if (userId != null) {
+                            if (customInfoWindowAdapter != null && customInfoWindowAdapter.isAdded()) {
+                                customInfoWindowAdapter.dismiss();
+                            }
+                            customInfoWindowAdapter = new CustomInfoWindowAdapter(userId);
+                            customInfoWindowAdapter.updateData(track);
                             customInfoWindowAdapter.show(getSupportFragmentManager(), "customInfoWindow");
+
                         }
                     }
 
@@ -223,11 +229,10 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
                         Log.e("LocalUser", "Error al obtener información de usuario", databaseError.toException());
                     }
                 });
-            }
             return false;
         });
-
     }
+
 
     // Start location updates
     private void startLocationUpdates() {
@@ -281,7 +286,7 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
 
         for (Pair<LatLng, String> userPair : nearUsers) {
 
-            if (!userPair.second.equals(sharedPref.getString("user_id", ""))) {
+            //if (!userPair.second.equals(sharedPref.getString("user_id", ""))) {
                 LatLng userLatLng = userPair.first;
                 String userId = userPair.second;
 
@@ -309,7 +314,7 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
                     nearestUserLatLng.set(userLatLng);
                     nearestUserDistance.set((double) results[0]);
                 }
-           }
+          // }
 
             // Verifica si se han procesado todos los usuarios
             if (usersProcessed.incrementAndGet() == nearUsers.size()) {

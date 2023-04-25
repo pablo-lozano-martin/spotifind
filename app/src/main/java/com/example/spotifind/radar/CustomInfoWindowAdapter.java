@@ -20,16 +20,21 @@ import androidx.fragment.app.DialogFragment;
 
 import com.example.spotifind.LocalUser;
 import com.example.spotifind.R;
+import com.spotify.protocol.types.Track;
 import com.squareup.picasso.Picasso;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 public class CustomInfoWindowAdapter extends DialogFragment {
-    private LocalUser user;
+    private String user;
+    private Track track;
 
-    public CustomInfoWindowAdapter(LocalUser user) {
+    ImageView songImage;
+
+    public CustomInfoWindowAdapter(String user) {
         this.user = user;
+        this.track = new Track(null,null, null ,0, null , null, null, false,false);
     }
 
     @NonNull
@@ -39,13 +44,13 @@ public class CustomInfoWindowAdapter extends DialogFragment {
         LayoutInflater inflater = getActivity().getLayoutInflater();
         View view = inflater.inflate(R.layout.custom_info_window, null);
 
-        String title = user.getLastPlayedSong().name;
+        String title = track.name;
         TextView songName = view.findViewById(R.id.song_name);
         Button openSpotifyButton = view.findViewById(R.id.open_spotify_button);
         ImageView songImage = view.findViewById(R.id.song_image);
-        songName.setText(user.getLastPlayedSong().name);
+        songName.setText(track.name);
 
-        String rawImageUri = user.getLastPlayedSong().imageUri.raw;
+        String rawImageUri = track.imageUri.raw;
         String imageUrl = "https://i.scdn.co/image/" + rawImageUri.replace("spotify:image:", "");
 
         Picasso picasso = Picasso.get();
@@ -53,12 +58,12 @@ public class CustomInfoWindowAdapter extends DialogFragment {
         picasso.load(imageUrl).priority(Picasso.Priority.HIGH).into(songImage);
 
         openSpotifyButton.setOnClickListener(v -> {
-            openSpotifySong(user.getLastPlayedSong().uri);
+            openSpotifySong(track.uri);
         });
 
         Button sendFriendRequestButton = view.findViewById(R.id.send_friend_request_button);
         sendFriendRequestButton.setOnClickListener(v -> {
-            sendFriendRequestNotification(user.getUid());
+            sendFriendRequestNotification(user);
         });
 
 
@@ -79,7 +84,9 @@ public class CustomInfoWindowAdapter extends DialogFragment {
         });
     }
 
-
+    public void updateData(Track newtrack) {
+       this.track=newtrack;
+    }
 
     // Envía la notificación utilizando un servicio web, como Retrofit o Volley.
         // Consulta la documentación de FCM para obtener información sobre cómo hacer esto:

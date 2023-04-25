@@ -17,6 +17,7 @@ import com.firebase.geofire.GeoFire;
 import com.firebase.geofire.GeoLocation;
 import com.firebase.geofire.GeoQuery;
 import com.firebase.geofire.GeoQueryEventListener;
+import com.google.common.reflect.TypeToken;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -31,6 +32,7 @@ import com.spotify.protocol.client.Subscription;
 import com.spotify.protocol.types.PlayerState;
 import com.spotify.protocol.types.Track;
 
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -164,42 +166,55 @@ public class LocalUser {
         setUid(uid);
         // Cargar los datos del usuario desde Firebase
 
-        SpotifyService artistSpotifyService = new SpotifyService(
-                spotitoken,
-                "artists",
-                null,
-                new SpotifyService.SpotifyCallback<List<CustomArtist>>() {
-                    @Override
-                    public void onSuccess(List<CustomArtist> result) {
-                        updateTop5Artists(result);
-                    }
 
-                    @Override
-                    public void onFailure(Throwable throwable) {
-                        Log.e("LocalUser", "Error al obtener los Top Artistas", throwable);
-                    }
-                }
-        );
+        String topArtistsJson = getDataFromCache(context, "TOP_ARTISTS");
+        String topTracksJson = getDataFromCache(context, "TOP_TRACKS");
 
-        SpotifyService trackSpotifyService = new SpotifyService(
-                spotitoken,
-                "tracks",
-                new SpotifyService.SpotifyCallback<List<CustomTrack>>() {
-                    @Override
-                    public void onSuccess(List<CustomTrack> result) {
-                        updateTop5Tracks(result);
-                    }
+        if (topArtistsJson != null && topTracksJson != null) {
+            Type artistListType = new TypeToken<List<CustomArtist>>(){}.getType();
+            top5Artists = new Gson().fromJson(topArtistsJson, artistListType);
+            Type trackListType = new TypeToken<List<CustomTrack>>(){}.getType();
+            top5Songs = new Gson().fromJson(topTracksJson, trackListType);
+        }
 
-                    @Override
-                    public void onFailure(Throwable throwable) {
-                        Log.e("LocalUser", "Error al obtener los Top Tracks", throwable);
-                    }
-                },
-                null
-        );
+        else {
+            SpotifyService artistSpotifyService = new SpotifyService(
+                    spotitoken,
+                    "artists",
+                    null,
+                    new SpotifyService.SpotifyCallback<List<CustomArtist>>() {
+                        @Override
+                        public void onSuccess(List<CustomArtist> result) {
+                            updateTop5Artists(result);
+                        }
 
-        artistSpotifyService.execute();
-        trackSpotifyService.execute();
+                        @Override
+                        public void onFailure(Throwable throwable) {
+                            Log.e("LocalUser", "Error al obtener los Top Artistas", throwable);
+                        }
+                    }
+            );
+
+            SpotifyService trackSpotifyService = new SpotifyService(
+                    spotitoken,
+                    "tracks",
+                    new SpotifyService.SpotifyCallback<List<CustomTrack>>() {
+                        @Override
+                        public void onSuccess(List<CustomTrack> result) {
+                            updateTop5Tracks(result);
+                        }
+
+                        @Override
+                        public void onFailure(Throwable throwable) {
+                            Log.e("LocalUser", "Error al obtener los Top Tracks", throwable);
+                        }
+                    },
+                    null
+            );
+
+            artistSpotifyService.execute();
+            trackSpotifyService.execute();
+        }
     }
 
 
@@ -342,7 +357,6 @@ public class LocalUser {
 
     public void addFriend(String userId){
         DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference("users");
-
         Log.d("LocalUser", "User saved to Firebase Realtime Database");
     }
 

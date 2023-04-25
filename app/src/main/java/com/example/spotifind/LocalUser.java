@@ -346,22 +346,6 @@ public class LocalUser {
         Log.d("LocalUser", "User saved to Firebase Realtime Database");
     }
 
-    public void updateCurrentSong(SpotifyAppRemote mspotifyAppRemote) {
-        // Subscribe to PlayerState
-        this.subscription = mspotifyAppRemote.getPlayerApi()
-                .subscribeToPlayerState()
-                .setEventCallback(playerState -> {
-                    Track track = playerState.track;
-                    if (track != null) {
-                        Log.d("LocalUser", "Now playing: " + track.name + " by " + track
-                                .artist.name);
-                        // Set last played song
-                        setLastPlayedSong(track);
-                    }
-
-                });
-    }
-
     private void saveDataToCache(Context context, String key, String jsonData) {
         SharedPreferences sharedPreferences = context.getSharedPreferences("SPOTIFIND_CACHE", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();

@@ -171,9 +171,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        if(mLocalUser!=null) {
-            mLocalUser.updateCurrentSong(mSpotifyAppRemote);
-        }
+        SpotifyAppRemote.connect(this, parametrosConexion, mConnectionListener);
     }
 
 
@@ -193,7 +191,6 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void run() {
                 initializeLocalUser();
-                mLocalUser.updateCurrentSong(mSpotifyAppRemote);
                 Intent intent = new Intent(MainActivity.this, RadarActivity.class);
                 intent.putExtra("user_id", mAuth.getUid());
                 startActivity(intent);
@@ -219,7 +216,6 @@ public class MainActivity extends AppCompatActivity {
     private void initializeLocalUser() {
         mAccessToken = obtenerAccessToken();
         mLocalUser = new LocalUser(this, mAuth.getUid(), mAccessToken);
-        mLocalUser.updateCurrentSong(mSpotifyAppRemote);
     }
 
     // Guarda el token de acceso en las preferencias compartidas

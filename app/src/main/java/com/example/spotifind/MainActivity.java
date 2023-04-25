@@ -188,7 +188,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        initializeLocalUser();
         mAccessToken = obtenerAccessToken();
         SpotifyAppRemote.disconnect(mSpotifyAppRemote);
         SpotifyAppRemote.connect(this, parametrosConexion, mConnectionListener);
@@ -200,7 +199,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        initializeLocalUser();
         mAccessToken = obtenerAccessToken();
         SpotifyAppRemote.connect(this, parametrosConexion, mConnectionListener);
     }

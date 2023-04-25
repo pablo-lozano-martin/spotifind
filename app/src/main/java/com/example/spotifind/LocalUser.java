@@ -102,9 +102,8 @@ public class LocalUser {
     public LocalUser(Context context) {
         //friendList = new ArrayList<>();
         this.context = context;
-        this.spotitoken= getDataFromCache(context, "access_token");
         context.getSharedPreferences("preferencias", Context.MODE_PRIVATE);
-        getSpotifyAuthToken(context);
+        this.spotitoken= getDataFromCache(context, "access_token");
 
         if (context != null) {
             cache = context.getSharedPreferences("preferencias", Context.MODE_PRIVATE);
@@ -334,7 +333,7 @@ public class LocalUser {
     }
 
     private void getDataFromFirebase() {
-        DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference("users").child(this.getUid());
+        DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference("users").child(getDataFromCache(context,"user_id"));
         ValueEventListener valueEventListener = new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {

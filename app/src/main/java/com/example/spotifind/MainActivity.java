@@ -177,6 +177,7 @@ public class MainActivity extends AppCompatActivity {
             mAuth.getCurrentUser().reload();
             mAccessToken = obtenerAccessToken();
             guardarUserId(mAuth.getCurrentUser().getUid());
+            initializeLocalUser();
             showSplashScreen();
         } else {
             Intent intent = new Intent(MainActivity.this, LoginActivity.class);
@@ -187,6 +188,8 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
+        initializeLocalUser();
+        mAccessToken = obtenerAccessToken();
         SpotifyAppRemote.disconnect(mSpotifyAppRemote);
         SpotifyAppRemote.connect(this, parametrosConexion, mConnectionListener);
 
@@ -197,6 +200,8 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        initializeLocalUser();
+        mAccessToken = obtenerAccessToken();
         SpotifyAppRemote.connect(this, parametrosConexion, mConnectionListener);
     }
 
@@ -204,6 +209,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStop() {
         super.onStop();
+        guardarAccessToken(obtenerAccessToken());
         SpotifyAppRemote.connect(this, parametrosConexion, mConnectionListener);
         SpotifyAppRemote.disconnect(mSpotifyAppRemote);
     }
@@ -216,7 +222,6 @@ public class MainActivity extends AppCompatActivity {
         new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {
-                initializeLocalUser();
                 Intent intent = new Intent(MainActivity.this, RadarActivity.class);
                 intent.putExtra("user_id", mAuth.getUid());
                 startActivity(intent);

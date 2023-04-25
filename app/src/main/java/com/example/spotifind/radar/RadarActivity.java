@@ -525,6 +525,9 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
         builder.create().show();
     }
 
-
+    @Override
+    public void onBackPressed() {
+        // No hacer nada para evitar que el botón de retroceso sea utilizado
+    }
 
 }

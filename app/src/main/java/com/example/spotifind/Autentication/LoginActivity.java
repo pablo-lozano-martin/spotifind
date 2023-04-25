@@ -96,5 +96,10 @@ public class LoginActivity extends AppCompatActivity {
                     }
                 });
     }
+
+    @Override
+    public void onBackPressed() {
+        // No hacer nada para evitar que el botón de retroceso sea utilizado
+    }
 }
 

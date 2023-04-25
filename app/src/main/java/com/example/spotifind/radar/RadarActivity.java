@@ -81,6 +81,8 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
 
     private AtomicInteger usersToProcess;
 
+    SharedPreferences sharedPref;
+
     private ActivityResultLauncher<String[]> requestPermissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), new ActivityResultCallback<Map<String, Boolean>>() {
                 @Override
@@ -101,13 +103,12 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_radar);
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-        SharedPreferences sharedPref = getSharedPreferences("preferencias", MODE_PRIVATE);
-        userid = sharedPref.getString("user_id", "");
+        sharedPref = getSharedPreferences("preferencias", MODE_PRIVATE);
         usersToProcess = new AtomicInteger(0);
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         nearUsers = new ArrayList<>();
         marcadoresUsuarios = new HashMap<>();
-        getUserLocation(userid,new LocationListener() {
+        getUserLocation(sharedPref.getString("user_id", ""),new LocationListener() {
             private double maxLongitude = 100;
             private double maxLatitude = 100;
             private double minLongitude = -100;
@@ -161,7 +162,7 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
 
         navBar = findViewById(R.id.navbar);
         navBar.setSelectedItemId(R.id.radar);
-        NavigationBarListener navigationBarListener = new NavigationBarListener(this,this.userid);
+        NavigationBarListener navigationBarListener = new NavigationBarListener(this,sharedPref.getString("user_id", ""));
         navBar.setOnNavigationItemSelectedListener(navigationBarListener);
     }
 
@@ -280,7 +281,7 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
 
         for (Pair<LatLng, String> userPair : nearUsers) {
 
-            //if (!userPair.second.equals(userid)) {
+            if (!userPair.second.equals(sharedPref.getString("user_id", ""))) {
                 LatLng userLatLng = userPair.first;
                 String userId = userPair.second;
 
@@ -308,7 +309,7 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
                     nearestUserLatLng.set(userLatLng);
                     nearestUserDistance.set((double) results[0]);
                 }
-           // }
+           }
 
             // Verifica si se han procesado todos los usuarios
             if (usersProcessed.incrementAndGet() == nearUsers.size()) {
@@ -324,7 +325,7 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
     public void getNearUsers(double radiusInMeters) {
         DatabaseReference userLocationsRef = FirebaseDatabase.getInstance().getReference("userLocations");
         GeoFire geoFire = new GeoFire(userLocationsRef);
-        getUserLocation(userid, new LocationListener() {
+        getUserLocation(this.sharedPref.getString("user_id", ""), new LocationListener() {
             @Override
             public void onLocationReceived(LatLng location) {
                 // Obtener la última ubicación conocida y realizar la búsqueda de usuarios cercanos
@@ -490,7 +491,7 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
             GeoFire geoFire = new GeoFire(userLocationsRef);
 
             // Guardar la ubicación en el formato que GeoFire espera
-            geoFire.setLocation(userid, new GeoLocation(latLng.latitude, latLng.longitude), new GeoFire.CompletionListener() {
+            geoFire.setLocation(sharedPref.getString("user_id", ""), new GeoLocation(latLng.latitude, latLng.longitude), new GeoFire.CompletionListener() {
                 @Override
                 public void onComplete(String key, DatabaseError error) {
                     if (error != null) {

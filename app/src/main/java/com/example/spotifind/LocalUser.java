@@ -49,6 +49,8 @@ public class LocalUser {
 
     private String email;
 
+    private String fcmToken;
+
     private Subscription<PlayerState> subscription;
 
     public Context getContext() {
@@ -72,7 +74,88 @@ public class LocalUser {
 
     public LocalUser() {
     }
-    public LocalUser(Context context,String uid,String spotitoken) {
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getSpotitoken() {
+        return spotitoken;
+    }
+
+    public void setSpotitoken(String spotitoken) {
+        this.spotitoken = spotitoken;
+    }
+
+    public FirebaseUser getCurrentUser() {
+        return currentUser;
+    }
+
+    public void setCurrentUser(FirebaseUser currentUser) {
+        this.currentUser = currentUser;
+    }
+
+    public SpotifyAppRemote getMspotifyAppRemote() {
+        return mspotifyAppRemote;
+    }
+
+    public void setMspotifyAppRemote(SpotifyAppRemote mspotifyAppRemote) {
+        this.mspotifyAppRemote = mspotifyAppRemote;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getFcmToken() {
+        return fcmToken;
+    }
+
+    public void setFcmToken(String fcmToken) {
+        this.fcmToken = fcmToken;
+    }
+
+    public Subscription<PlayerState> getSubscription() {
+        return subscription;
+    }
+
+    public void setSubscription(Subscription<PlayerState> subscription) {
+        this.subscription = subscription;
+    }
+
+    public void setFriendList(List<LocalUser> friendList) {
+        this.friendList = friendList;
+    }
+
+    public List<LocalUser> getNearUsers() {
+        return nearUsers;
+    }
+
+    public void setNearUsers(List<LocalUser> nearUsers) {
+        this.nearUsers = nearUsers;
+    }
+
+    public List<String> getNotification() {
+        return notification;
+    }
+
+    public void setNotification(List<String> notification) {
+        this.notification = notification;
+    }
+
+    public Location getCurrentLocation() {
+        return currentLocation;
+    }
+
+    public void setCurrentLocation(Location currentLocation) {
+        this.currentLocation = currentLocation;
+    }
+
+    public LocalUser(Context context, String uid, String spotitoken) {
 
         friendList = new ArrayList<>();
         nearUsers = new ArrayList<>();
@@ -263,9 +346,9 @@ public class LocalUser {
         Log.d("LocalUser", "User saved to Firebase Realtime Database");
     }
 
-    public void updateCurrentSong() {
+    public void updateCurrentSong(SpotifyAppRemote mspotifyAppRemote) {
         // Subscribe to PlayerState
-        this.subscription = MainActivity.mSpotifyAppRemote.getPlayerApi()
+        this.subscription = mspotifyAppRemote.getPlayerApi()
                 .subscribeToPlayerState()
                 .setEventCallback(playerState -> {
                     Track track = playerState.track;
@@ -277,10 +360,6 @@ public class LocalUser {
                     }
 
                 });
-    }
-
-    public void setSpoifyAppRemote() {
-        updateCurrentSong();
     }
 
     private void saveDataToCache(Context context, String key, String jsonData) {

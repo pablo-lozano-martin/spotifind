@@ -1,5 +1,7 @@
 package com.example.spotifind.firebase;
 
+import static android.content.ContentValues.TAG;
+
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -17,9 +19,6 @@ public class FirebaseService {
     private LocalUser user;
 
 
-    public FirebaseService() {
-        mDatabase = FirebaseDatabase.getInstance().getReference();
-    }
 
     public void startRealtimeUpdates(String userId) {
         mDatabase.child("users").child(userId).addValueEventListener(new ValueEventListener() {
@@ -35,4 +34,26 @@ public class FirebaseService {
             }
         });
     }
+
+    public void getFcmToken(String userId, final FcmTokenCallback callback) {
+        DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference("users/" + userId + "/fcmToken");
+
+        databaseReference.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                String fcmToken = dataSnapshot.getValue(String.class);
+                callback.onTokenReceived(fcmToken);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                Log.w(TAG, "Error al obtener el token FCM", databaseError.toException());
+            }
+        });
+    }
+
+    public interface FcmTokenCallback {
+        void onTokenReceived(String fcmToken);
+    }
+
 }

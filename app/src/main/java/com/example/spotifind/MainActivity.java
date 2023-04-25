@@ -1,5 +1,6 @@
 package com.example.spotifind;
 
+import static android.content.ContentValues.TAG;
 import static com.spotify.sdk.android.auth.AuthorizationResponse.Type.TOKEN;
 import static com.spotify.sdk.android.auth.LoginActivity.REQUEST_CODE;
 
@@ -23,12 +24,20 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
+import com.bumptech.glide.util.ByteBufferUtil;
 import com.example.spotifind.Autentication.LoginActivity;
 import com.example.spotifind.firebase.FirebaseService;
 import com.example.spotifind.databinding.ActivityMainBinding;
 import com.example.spotifind.radar.RadarActivity;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.FirebaseApp;
+import com.google.firebase.FirebaseOptions;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.messaging.FirebaseMessaging;
 import com.spotify.android.appremote.api.ConnectionParams;
 import com.spotify.android.appremote.api.Connector;
 import com.spotify.android.appremote.api.SpotifyAppRemote;
@@ -40,6 +49,9 @@ import com.spotify.sdk.android.auth.AuthorizationClient;
 import com.spotify.sdk.android.auth.AuthorizationRequest;
 import com.spotify.sdk.android.auth.AuthorizationResponse;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 
 public class MainActivity extends AppCompatActivity {
@@ -51,8 +63,8 @@ public class MainActivity extends AppCompatActivity {
 
     private ActivityMainBinding mBinding;
     private FirebaseAuth mAuth;
-    private FirebaseService mFirebaseService;
-    public static SpotifyAppRemote mSpotifyAppRemote;
+    public static FirebaseService mFirebaseService;
+    private SpotifyAppRemote mSpotifyAppRemote;
     private static String mAccessToken;
     private LocalUser mLocalUser;
 
@@ -70,6 +82,18 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onConnected(SpotifyAppRemote spotifyAppRemote) {
             mSpotifyAppRemote = spotifyAppRemote;
+            // Subscribe to PlayerState
+            mSpotifyAppRemote.getPlayerApi()
+                    .subscribeToPlayerState()
+                    .setEventCallback(playerState -> {
+                        final Track track = playerState.track;
+                        if (track != null) {
+                            DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference("users").child(obtenerUserId());
+                            // Update last played song in Firebase
+                            databaseRef.child("lastPlayedSong").setValue(track);
+                            Log.d("LocalUser", "Last played song updated in Firebase");
+                        }
+                    });
         }
 
         @Override
@@ -77,7 +101,7 @@ public class MainActivity extends AppCompatActivity {
             if (error instanceof NotLoggedInException || error instanceof UserNotAuthorizedException) {
 
             } else if (error instanceof CouldNotFindSpotifyApp) {
-               //
+                //
             }
         }
     };
@@ -86,27 +110,49 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mContext = this;
-        // Inicializa las variables aquí
         mAuth = FirebaseAuth.getInstance();
         mFirebaseService = new FirebaseService();
         mBinding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(mBinding.getRoot());
         getSupportActionBar().hide();
-
         mLoginActivityResultLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
                     if (result.getResultCode() == RESULT_OK) {
+
+                        FirebaseMessaging.getInstance().getToken()
+                                .addOnCompleteListener(new OnCompleteListener<String>() {
+                                    @Override
+                                    public void onComplete(@NonNull Task<String> task) {
+                                        if (!task.isSuccessful()) {
+                                            Log.w(TAG, "Fetching FCM registration token failed", task.getException());
+                                            return;
+                                        }
+
+                                        // Get new FCM registration token
+                                        String token = task.getResult();
+
+                                        // Save the token to SharedPreferences
+                                        saveFcmTokenToFirebase(token);
+
+
+                                        // Log and toast
+                                        //String msg = getString(R.string.msg_token_fmt, token);
+                                        // Log.d(TAG, msg);
+                                        //Toast.makeText(MainActivity.this, msg, Toast.LENGTH_SHORT).show();
+                                    }
+                                });
+
                         authUser();
                         showSplashScreen();
-                    }
-                    else {
+                    } else {
                     }
                 });
 
-        if (mAuth.getCurrentUser()!=null) {
+        if (mAuth.getCurrentUser() != null) {
             mAuth.getCurrentUser().reload();
             mAccessToken = obtenerAccessToken();
+            guardarUserId(mAuth.getCurrentUser().getUid());
             showSplashScreen();
         } else {
             Intent intent = new Intent(MainActivity.this, LoginActivity.class);
@@ -122,10 +168,20 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-        @Override
-        protected void onStop() {
-            super.onStop();
-            SpotifyAppRemote.disconnect(mSpotifyAppRemote);
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if(mLocalUser!=null) {
+            mLocalUser.updateCurrentSong(mSpotifyAppRemote);
+        }
+    }
+
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        SpotifyAppRemote.connect(this, parametrosConexion, mConnectionListener);
+        SpotifyAppRemote.disconnect(mSpotifyAppRemote);
     }
 
 
@@ -137,6 +193,11 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void run() {
                 initializeLocalUser();
+                mLocalUser.updateCurrentSong(mSpotifyAppRemote);
+                Intent intent = new Intent(MainActivity.this, RadarActivity.class);
+                intent.putExtra("user_id", mAuth.getUid());
+                startActivity(intent);
+
             }
         }, 1000); // muestra la splash screen por 5 segundos antes de cargar la actividad principal
     }
@@ -157,12 +218,8 @@ public class MainActivity extends AppCompatActivity {
     // Inicializa los datos del usuario local
     private void initializeLocalUser() {
         mAccessToken = obtenerAccessToken();
-        mLocalUser = new LocalUser(this,mAuth.getUid(),mAccessToken);
-        mLocalUser.setSpoifyAppRemote();
-        Intent intent = new Intent(MainActivity.this, RadarActivity.class);
-        intent.putExtra("user_id", mAuth.getUid());
-        startActivity(intent);
-        finish();
+        mLocalUser = new LocalUser(this, mAuth.getUid(), mAccessToken);
+        mLocalUser.updateCurrentSong(mSpotifyAppRemote);
     }
 
     // Guarda el token de acceso en las preferencias compartidas
@@ -214,7 +271,7 @@ public class MainActivity extends AppCompatActivity {
         return sharedPreferences.getString("user_id", null);
     }
 
-    public static String getToken(){
+    public static String getToken() {
         return mAccessToken;
     }
 
@@ -236,7 +293,7 @@ public class MainActivity extends AppCompatActivity {
                 TOKEN,
                 REDIRECT_URI
         );
-        builder.setScopes(new String[]{"user-read-private", "playlist-read", "user-library-read", "user-read-currently-playing", "user-read-playback-state", "user-modify-playback-state","user-top-read"});
+        builder.setScopes(new String[]{"user-read-private", "playlist-read", "user-library-read", "user-read-currently-playing", "user-read-playback-state", "user-modify-playback-state", "user-top-read"});
         AuthorizationRequest request = builder.build();
 
         // Se llama al método AuthorizationClient.openLoginActivity() para iniciar la actividad de autenticación de Spotify
@@ -269,4 +326,14 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
+    private void saveFcmTokenToFirebase(String token) {
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (currentUser != null) {
+            DatabaseReference tokenRef = FirebaseDatabase.getInstance().getReference("users")
+                    .child(currentUser.getUid())
+                    .child("fcmToken");
+            tokenRef.setValue(token);
+        }
+    }
 }
+

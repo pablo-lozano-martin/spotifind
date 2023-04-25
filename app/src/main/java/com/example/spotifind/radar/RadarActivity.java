@@ -10,6 +10,7 @@ import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.Settings;
@@ -26,6 +27,7 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
 
 import com.example.spotifind.LocalUser;
+import android.Manifest;
 import com.example.spotifind.NavigationBarListener;
 import com.example.spotifind.R;
 import com.firebase.geofire.GeoFire;
@@ -200,20 +202,16 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
 
         // Establecer un OnMarkerClickListener para mostrar el título del marcador con el nombre de la canción
         mMap.setOnMarkerClickListener(marker -> {
-            String userId = (String) marker.getTag(); // Obtener el ID del usuario desde el tag del marcador
+            String userId = (String) marker.getTag();
             if (userId != null) {
-                // Obtener la información del usuario desde Firebase usando el ID del usuario
                 DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(userId);
-                userRef.addValueEventListener(new ValueEventListener() { // Cambiado a addListenerForSingleValueEvent
+                userRef.addValueEventListener(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                        LocalUser user =  dataSnapshot.getValue(LocalUser.class);
+                        LocalUser user = dataSnapshot.getValue(LocalUser.class);
                         if (user != null) {
-                            // Mostrar la canción del usuario como título del marcador
-                            String userSong = user.getLastPlayedSong().name;
-                            mMap.setInfoWindowAdapter(new CustomInfoWindowAdapter(RadarActivity.this, user));
-                            marker.showInfoWindow(); // Mostrar la ventana de información personalizada
-
+                            CustomInfoWindowAdapter customInfoWindowAdapter = new CustomInfoWindowAdapter(user);
+                            customInfoWindowAdapter.show(getSupportFragmentManager(), "customInfoWindow");
                         }
                     }
 
@@ -223,15 +221,10 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
                     }
                 });
             }
-            else {
-                Log.e("LocalUser", "El ID del usuario es nulo");
-            }
-            return false; // Esto permite que el evento de clic también se propague al mapa
+            return false;
         });
+
     }
-
-
-
 
     // Start location updates
     private void startLocationUpdates() {
@@ -285,7 +278,7 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
 
         for (Pair<LatLng, String> userPair : nearUsers) {
 
-            if (!userPair.second.equals(userid)) {
+            //if (!userPair.second.equals(userid)) {
                 LatLng userLatLng = userPair.first;
                 String userId = userPair.second;
 
@@ -313,7 +306,7 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
                     nearestUserLatLng.set(userLatLng);
                     nearestUserDistance.set((double) results[0]);
                 }
-            }
+           // }
 
             // Verifica si se han procesado todos los usuarios
             if (usersProcessed.incrementAndGet() == nearUsers.size()) {
@@ -528,4 +521,7 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
         });
         builder.create().show();
     }
+
+
+
 }

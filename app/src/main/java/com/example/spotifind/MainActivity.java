@@ -83,6 +83,8 @@ public class MainActivity extends AppCompatActivity {
         public void onConnected(SpotifyAppRemote spotifyAppRemote) {
             mSpotifyAppRemote = spotifyAppRemote;
             // Subscribe to PlayerState
+            mSpotifyAppRemote.getPlayerApi().play("spotify:track:4cOdK2wGLETKBW3PvgPWqT");
+
             mSpotifyAppRemote.getPlayerApi()
                     .subscribeToPlayerState()
                     .setEventCallback(playerState -> {

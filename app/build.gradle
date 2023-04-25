@@ -57,7 +57,7 @@ dependencies {
     implementation "com.google.firebase:firebase-auth"
     implementation 'com.google.firebase:firebase-firestore'
     implementation 'com.google.firebase:firebase-database'
-    implementation 'com.google.firebase:firebase-messaging:23.0.0'
+    implementation 'com.google.firebase:firebase-messaging'
 
 
     implementation 'com.spotify.android:auth:2.0.2'
@@ -71,6 +71,7 @@ dependencies {
 
     implementation 'id.zelory:compressor:2.1.1'
     implementation 'com.firebase:geofire-android:3.1.0'
+
 
     // Add the dependencies for any other desired Firebase products
     // https://firebase.google.com/docs/android/setup#available-libraries

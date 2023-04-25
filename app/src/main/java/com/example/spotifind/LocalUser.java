@@ -13,6 +13,7 @@ import com.example.spotifind.Spotify.CustomArtist;
 import com.example.spotifind.Spotify.CustomTrack;
 import com.example.spotifind.Spotify.SpotifyService;
 import com.example.spotifind.Spotify.SpotifyUriService;
+import com.example.spotifind.friendlist.FriendlistActivity;
 import com.firebase.geofire.GeoFire;
 import com.firebase.geofire.GeoLocation;
 import com.firebase.geofire.GeoQuery;
@@ -61,6 +62,7 @@ public class LocalUser {
 
     private Context context;
 
+    private List<LocalUser> friendList;
     private SharedPreferences cache;
 
     public LocalUser(){
@@ -95,12 +97,20 @@ public class LocalUser {
                 top5Songs.add(track);
             }
         }
+
+        if(dataSnapshot.hasChild("friendList")){
+            friendList= new ArrayList<>();
+                for (DataSnapshot songSnapshot : dataSnapshot.child("friendList").getChildren()) {
+                    LocalUser friend = songSnapshot.getValue(LocalUser.class);
+                    friendList.add(friend);
+                }
+        }
+
         getSpotifyStats();
     }
 
 
     public LocalUser(Context context) {
-        //friendList = new ArrayList<>();
         this.context = context;
         context.getSharedPreferences("preferencias", Context.MODE_PRIVATE);
         this.spotitoken= getDataFromCache(context, "access_token");
@@ -294,12 +304,23 @@ public class LocalUser {
         saveDataToCache(this.context, "fcmToken", jsonData);
     }
 
-    /*public void setFriendList(List<LocalUser> friendList) {
+    public void setFriendList(List<LocalUser> friendList) {
         this.friendList = friendList;
         String jsonData = new Gson().toJson(friendList);
         saveDataToCache(this.context, "friendList", jsonData);
-    }*/
+    }
+
+    private List<LocalUser> getFriendListFromCache(Context context) {
+        String jsonData = getDataFromCache(context, "friendList");
+        if (jsonData != null) {
+            Type friendListType = new TypeToken<List<LocalUser>>(){}.getType();
+            return new Gson().fromJson(jsonData, friendListType);
+        }
+        return null;
+    }
     private void initializeDataFromCache() {
+
+        List<LocalUser> cachedFriendList = getFriendListFromCache(context);
         String uid = getDataFromCache(context, "user_id");
         String username = getDataFromCache(context, "username");
         String email = getDataFromCache(context, "email");
@@ -322,9 +343,8 @@ public class LocalUser {
             this.uid = new Gson().fromJson(uid, String.class);
         }
 
-        if (friendListJson != null) {
-            Type friendListType = new TypeToken<List<LocalUser>>(){}.getType();
-            //this.friendList = new Gson().fromJson(friendListJson, friendListType);
+        if (cachedFriendList != null) {
+            this.friendList = cachedFriendList;
         }
 
         if (username == null || email == null || fcmToken == null || uid == null || friendListJson == null) {
@@ -352,9 +372,10 @@ public class LocalUser {
                         setFcmToken(localUser.getFcmToken());
                     }
 
-                    // if (friendListJson == null && localUser.getFriendList() != null) {
-                    //     setFriendList(localUser.getFriendList());
-                    // }
+                    List<LocalUser> cachedFriendList = getFriendListFromCache(context);
+                    if (friendList == null && localUser.getFriendList() != null) {
+                        setFriendList(localUser.getFriendList());
+                    }
                 }
             }
 
@@ -365,6 +386,15 @@ public class LocalUser {
         };
 
         databaseRef.addListenerForSingleValueEvent(valueEventListener);
+    }
+
+    private void setFriendList(String topArtistsJson) {
+        Type artistListType = new TypeToken<List<CustomArtist>>(){}.getType();
+        top5Artists = new Gson().fromJson(topArtistsJson, artistListType);
+    }
+
+    private List<LocalUser> getFriendList() {
+        return friendList;
     }
 
     public String getUsername() {

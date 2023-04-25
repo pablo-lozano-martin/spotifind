@@ -87,7 +87,7 @@ public class MainActivity extends AppCompatActivity {
         public void onConnected(SpotifyAppRemote spotifyAppRemote) {
             // Consultar la última canción reproducida en Firebase
             mSpotifyAppRemote = spotifyAppRemote;
-            DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference("users").child(mAuth.getUid());
+            DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference("users").child(obtenerUserId());
             databaseRef.child("lastPlayedSong").addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -166,7 +166,7 @@ public class MainActivity extends AppCompatActivity {
                                         //Toast.makeText(MainActivity.this, msg, Toast.LENGTH_SHORT).show();
                                     }
                                 });
-
+                        guardarUserId(mAuth.getCurrentUser().getUid());
                         showSplashScreen();
                     } else {
                         // Handle the case when resultCode is not RESULT_OK
@@ -191,6 +191,7 @@ public class MainActivity extends AppCompatActivity {
         SpotifyAppRemote.connect(this, parametrosConexion, mConnectionListener);
 
     }
+
 
 
     @Override

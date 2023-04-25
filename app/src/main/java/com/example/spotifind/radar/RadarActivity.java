@@ -6,6 +6,7 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
@@ -100,7 +101,8 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_radar);
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-        userid=currentUser.getUid();
+        SharedPreferences sharedPref = getSharedPreferences("preferencias", MODE_PRIVATE);
+        userid = sharedPref.getString("user_id", "");
         usersToProcess = new AtomicInteger(0);
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         nearUsers = new ArrayList<>();

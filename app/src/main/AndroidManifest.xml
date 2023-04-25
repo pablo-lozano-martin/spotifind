@@ -63,7 +63,8 @@
             android:name=".Autentication.SignUpActivity"
             android:exported="true">
         </activity>
-        <activity android:name=".radar.RadarActivity" />
+        <activity android:name=".radar.RadarActivity"
+            android:configChanges="orientation|screenSize|screenLayout"/>
 
         <service
             android:name=".notifications.MyFirebaseMessagingService"

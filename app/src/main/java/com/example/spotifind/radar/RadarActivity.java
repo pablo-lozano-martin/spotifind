@@ -17,6 +17,7 @@ import android.os.Handler;
 import android.provider.Settings;
 import android.util.Log;
 import android.util.Pair;
+import android.view.View;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultCallback;
@@ -46,6 +47,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.ChildEventListener;
@@ -160,8 +162,18 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
             locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
             // Request location updates
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 10, this);
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 3000, 3, this);
         }
+
+        FloatingActionButton centrarFAB = findViewById(R.id.centrar_fab);
+
+        // Agregar el listener al botón
+        centrarFAB.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(lastKnownLatLng, 15));
+            }
+        });
 
         navBar = findViewById(R.id.navbar);
         navBar.setSelectedItemId(R.id.radar);
@@ -239,7 +251,11 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED) {
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,
-                    5000, 10, this);
+                    3000, 3, this);
+            lastKnownLatLng = new LatLng(locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER).getLatitude(), locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER).getLongitude());
+        }
+        else{
+            Toast.makeText(this, "No hay permisos de ubicación...", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -247,15 +263,19 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
 
     public void onLocationChanged(Location location) {
         // Actualiza la última ubicación conocida y mueve la cámara hacia ella
+        double lat = lastKnownLatLng.latitude, lon = lastKnownLatLng.longitude;
         lastKnownLatLng = new LatLng(location.getLatitude(), location.getLongitude());
         setLastKnownLatLng(lastKnownLatLng);
-        Toast.makeText(this, "Ubicación cambiada", Toast.LENGTH_SHORT).show();
-        this.minLatitude = location.getLatitude() - 0.5; this.maxLatitude = location.getLatitude() + 0.5;
-        this.minLongitude = location.getLongitude() - 0.5; this.maxLongitude = location.getLongitude() + 0.5;
+
+        /*this.minLatitude = location.getLatitude() - 0.5; this.maxLatitude = location.getLatitude() + 0.5;
+        this.minLongitude = location.getLongitude() - 0.5; this.maxLongitude = location.getLongitude() + 0.5;*/
         // Mover la cámara hacia la nueva ubicación
         if (mMap != null) {
-            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(lastKnownLatLng, 15));
-            getNearUsers(3000);
+            Toast.makeText(this, "OldLat: "+lat+" OldLon: "+lon+"\nLat: "+location.getLatitude()+" Lon: "+location.getLongitude(), Toast.LENGTH_SHORT).show();
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(lastKnownLatLng, 15));
+            //mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(lastKnownLatLng, 15));
+
+            getNearUsers(20000);
         }
 
     }
@@ -273,8 +293,8 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
     @Override
     public void onCameraMove() {
         // Update the last known location when the map moves
-        lastKnownLatLng = mMap.getCameraPosition().target;
-        Toast.makeText(this, "Moving cámera", Toast.LENGTH_SHORT).show();
+        //lastKnownLatLng = mMap.getCameraPosition().target;
+        //Toast.makeText(this, "Moving cámera", Toast.LENGTH_SHORT).show();
     }
 
     private void addMarkers(List<Pair<LatLng, String>> nearUsers) {

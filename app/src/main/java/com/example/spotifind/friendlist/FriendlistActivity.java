@@ -4,10 +4,12 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.util.Log;
 
 import com.example.spotifind.LocalUser;
+import com.example.spotifind.MainActivity;
 import com.example.spotifind.NavigationBarListener;
 import com.example.spotifind.R;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -33,6 +35,7 @@ public class FriendlistActivity extends AppCompatActivity implements FriendlistA
 
     private void setfriendlist(){
         //TODO set the friendlist
+        LocalUser user = new LocalUser(this);
         this.friendlist = new ArrayList<LocalUser>();
     }
 

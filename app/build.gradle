@@ -3,6 +3,7 @@ plugins {
     id 'com.google.android.libraries.mapsplatform.secrets-gradle-plugin'
     id 'com.google.gms.google-services'
 }
+
 android {
     namespace 'com.example.spotifind'
     compileSdk 33
@@ -13,8 +14,9 @@ android {
         targetSdk 33
         versionCode 1
         versionName "1.0"
-        manifestPlaceholders = [redirectHostName: "localhost",redirectSchemeName: "com.example.spotifind://callback"]
+        manifestPlaceholders = [redirectHostName: "localhost", redirectSchemeName: "com.example.spotifind://callback"]
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField "String", "PRIVATE_KEY", "\"AAAAm_21WtQ:APA91bEoHMsuXzCG_Ek2v4ZOTc8VJe_ZnM_WDs4QkedfJTHg0_f079gy2CdfR9JxiJ47_hIsgmEsV-REP-ht6HdoZH5L5n32sl-cf88Wvgf8wzYzv7UAgwDjsW-A13ARl7Tl4heu44DW\""
     }
 
     buildTypes {
@@ -76,3 +78,5 @@ dependencies {
     // Add the dependencies for any other desired Firebase products
     // https://firebase.google.com/docs/android/setup#available-libraries
 }
+
+apply plugin: 'com.google.gms.google-services'

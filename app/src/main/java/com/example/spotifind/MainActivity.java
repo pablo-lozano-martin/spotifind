@@ -88,28 +88,6 @@ public class MainActivity extends AppCompatActivity {
             // Consultar la última canción reproducida en Firebase
             mSpotifyAppRemote = spotifyAppRemote;
             DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference("users").child(obtenerUserId());
-            databaseRef.child("lastPlayedSong").addListenerForSingleValueEvent(new ValueEventListener() {
-                @Override
-                public void onDataChange(@NonNull DataSnapshot snapshot) {
-                    Track lastPlayedSong = snapshot.getValue(Track.class);
-
-                    if (lastPlayedSong != null) {
-                        // Reproducir la última canción reproducida en Spotify
-                        mSpotifyAppRemote.getPlayerApi().play(lastPlayedSong.uri);
-                        Log.d("LocalUser", "Reproduciendo la última canción reproducida de Firebase");
-                    } else {
-                        // Reproducir una canción predeterminada en Spotify
-                        mSpotifyAppRemote.getPlayerApi().play("spotify:track:6rqhFgbbKwnb9MLmUQDhG6");
-                        Log.d("LocalUser", "Reproduciendo una canción predeterminada en Firebase");
-                    }
-                }
-
-                @Override
-                public void onCancelled(@NonNull DatabaseError error) {
-                    Log.e("LocalUser", "Error al leer el valor de Firebase.", error.toException());
-                }
-            });
-
             // Suscribirse a los cambios en el estado del reproductor de Spotify
             mSpotifyAppRemote.getPlayerApi().subscribeToPlayerState().setEventCallback(playerState -> {
                 final Track track = playerState.track;
@@ -117,6 +95,23 @@ public class MainActivity extends AppCompatActivity {
                     // Actualizar la última canción reproducida en Firebase
                     databaseRef.child("lastPlayedSong").setValue(track);
                     Log.d("LocalUser", "Última canción reproducida actualizada en Firebase");
+                }
+                else{
+                    databaseRef.child("lastPlayedSong").addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override public void onDataChange(@NonNull DataSnapshot snapshot) {
+                            Track lastPlayedSong = snapshot.getValue(Track.class);
+                            if(lastPlayedSong == null){
+                                // Reproducir una canción predeterminada en Spotify
+                                mSpotifyAppRemote.getPlayerApi().play("spotify:track:6rqhFgbbKwnb9MLmUQDhG6");
+                                Log.d("LocalUser", "Reproduciendo una canción predeterminada en Firebase");
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError error) {
+                            Log.e("LocalUser", "Error al leer el valor de Firebase.", error.toException());
+                        }
+                    });
                 }
             });
         }
@@ -135,6 +130,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         mContext = this;
         mAuth = FirebaseAuth.getInstance();
+        FirebaseApp.initializeApp(this);
         mFirebaseService = new FirebaseService();
         mBinding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(mBinding.getRoot());
@@ -188,9 +184,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        mAccessToken = obtenerAccessToken();
-        SpotifyAppRemote.disconnect(mSpotifyAppRemote);
-        SpotifyAppRemote.connect(this, parametrosConexion, mConnectionListener);
+        authUser();
+        if(mSpotifyAppRemote==null)
+            SpotifyAppRemote.connect(this, parametrosConexion, mConnectionListener);
 
     }
 
@@ -243,6 +239,7 @@ public class MainActivity extends AppCompatActivity {
 
     // Inicializa los datos del usuario local
     private void initializeLocalUser() {
+        SpotifyAppRemote.connect(this, parametrosConexion, mConnectionListener);
         mLocalUser = new LocalUser(this);
     }
 

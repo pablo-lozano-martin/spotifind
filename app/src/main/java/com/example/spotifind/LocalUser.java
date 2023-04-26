@@ -69,6 +69,11 @@ public class LocalUser {
 
     public LocalUser(DataSnapshot dataSnapshot, Context context) {
         this.context = context;
+
+        if (dataSnapshot.hasChild("uid")) {
+            setUsername(dataSnapshot.child("uid").getValue(String.class));
+        }
+
         if (dataSnapshot.hasChild("username")) {
             setUsername(dataSnapshot.child("username").getValue(String.class));
         }
@@ -112,7 +117,10 @@ public class LocalUser {
     public LocalUser(Context context) {
         this.context = context;
         context.getSharedPreferences("preferencias", Context.MODE_PRIVATE);
-        this.spotitoken= getDataFromCache(context, "access_token");
+        this.spotitoken= getSpotifyAuthToken(context);
+            if(spotitoken==null){
+                MainActivity.getToken();
+            }
 
         if (context != null) {
             cache = context.getSharedPreferences("preferencias", Context.MODE_PRIVATE);
@@ -236,7 +244,7 @@ public class LocalUser {
 
     public void setTop5Songs(List<CustomTrack> top5Songs) {
         this.top5Songs = top5Songs;
-        DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference("users").child(this.getUid());
+        DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference("users").child(this.uid);
 
         if (top5Songs != null) {
             // Update Top 5 Songs in Firebase
@@ -249,7 +257,7 @@ public class LocalUser {
 
     public void setTop5Artists(List<CustomArtist> top5Artists) {
         this.top5Artists = top5Artists;
-        DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference("users").child(this.getUid());
+        DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference("users").child(this.uid);
 
         if (top5Artists != null) {
             // Update Top 5 Artists in Firebase
@@ -346,7 +354,7 @@ public class LocalUser {
             this.friendList = cachedFriendList;
         }
 
-        if (username == null || email == null || fcmToken == null || uid == null || friendListJson == null) {
+        if (username == null || fcmToken == null || uid == null) {
             getDataFromFirebase();
         }
     }
@@ -358,6 +366,10 @@ public class LocalUser {
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if (dataSnapshot.exists()) {
                     LocalUser localUser = new LocalUser(dataSnapshot, context);
+
+                    if(uid== null && localUser.getUid()!=null){
+                        setUid(localUser.getUid());
+                    }
 
                     if (username == null && localUser.getUsername() != null) {
                         setUsername(localUser.getUsername());

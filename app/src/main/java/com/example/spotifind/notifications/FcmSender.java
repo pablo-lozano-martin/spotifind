@@ -2,6 +2,8 @@ package com.example.spotifind.notifications;
 
 import android.util.Log;
 
+import com.example.spotifind.BuildConfig;
+
 import java.io.IOException;
 
 import retrofit2.Call;
@@ -14,6 +16,9 @@ public class FcmSender {
     private static final String FCM_BASE_URL = "https://fcm.googleapis.com/";
 
     public static void sendFcmNotification(String toToken, String title, String body, String senderUid) {
+
+        String fcmServerKey = "key=" + BuildConfig.SERVER_KEY;
+
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(FCM_BASE_URL)
                 .addConverterFactory(GsonConverterFactory.create())
@@ -29,7 +34,10 @@ public class FcmSender {
         notificationData.setBody(body);
         notification.setNotification(notificationData);
 
-        Call<Void> call = fcmApiService.sendNotification(notification);
+        // Agrega senderUid como un dato de la notificación
+        notification.addData("senderUid", senderUid);
+
+        Call<Void> call = fcmApiService.sendNotification(fcmServerKey, notification);
         call.enqueue(new Callback<Void>() {
             @Override
             public void onResponse(Call<Void> call, Response<Void> response) {
@@ -44,7 +52,6 @@ public class FcmSender {
                     }
                 }
             }
-
 
             @Override
             public void onFailure(Call<Void> call, Throwable t) {

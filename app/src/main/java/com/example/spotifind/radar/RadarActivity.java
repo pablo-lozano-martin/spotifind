@@ -92,6 +92,8 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
 
     SharedPreferences sharedPref;
 
+    private Context mContext;
+
     private ActivityResultLauncher<String[]> requestPermissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), new ActivityResultCallback<Map<String, Boolean>>() {
                 @Override
@@ -110,8 +112,8 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mContext = this;
         setContentView(R.layout.activity_radar);
-        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         sharedPref = getSharedPreferences("preferencias", MODE_PRIVATE);
         usersToProcess = new AtomicInteger(0);
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
@@ -138,7 +140,8 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
             public void onStatusChanged(String provider, int status, Bundle extras) {}
 
             @Override
-            public void onProviderEnabled(String provider) {}
+            public void onProviderEnabled(String provider) {
+            }
 
             @Override
             public void onProviderDisabled(String provider) {}
@@ -211,7 +214,6 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-
         // Comprobar permisos
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
@@ -226,7 +228,6 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
 
         // Establecer un OnCameraMoveListener para detectar movimientos en el mapa
         mMap.setOnCameraMoveListener(this);
-
         mMap.setOnMarkerClickListener(marker -> {
             String userId = (String) marker.getTag();
                 DatabaseReference lastPlayedSongRef = FirebaseDatabase.getInstance().getReference("users").child(userId).child("lastPlayedSong");

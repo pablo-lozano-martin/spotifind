@@ -5,6 +5,7 @@ import com.example.spotifind.firebase.FirebaseService;
 import com.example.spotifind.notifications.*;
 import android.app.Activity;
 import android.app.Dialog;
+import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -17,6 +18,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.DialogFragment;
+import androidx.fragment.app.FragmentTransaction;
 
 import com.example.spotifind.LocalUser;
 import com.example.spotifind.R;
@@ -27,6 +29,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 public class CustomInfoWindowAdapter extends DialogFragment {
+
     private String user;
     private Track track;
 
@@ -100,4 +103,5 @@ public class CustomInfoWindowAdapter extends DialogFragment {
         intent.putExtra(Intent.EXTRA_REFERRER, Uri.parse("android-app://" + getActivity().getPackageName()));
         startActivity(intent);
     }
+
 }

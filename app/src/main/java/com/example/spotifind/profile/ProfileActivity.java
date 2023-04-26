@@ -14,8 +14,10 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.spotifind.CardAdapter;
 import com.example.spotifind.LocalUser;
+import com.example.spotifind.NavigationBarListener;
 import com.example.spotifind.R;
 import com.example.spotifind.Spotify.CustomArtist;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.firebase.auth.FirebaseUser;
 
 import java.util.ArrayList;
@@ -28,6 +30,7 @@ public class ProfileActivity extends AppCompatActivity {
     private ImageButton editButton;
     private Button spotifyButton;
     private RecyclerView recyclerView;
+    private BottomNavigationView navBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,6 +42,11 @@ public class ProfileActivity extends AppCompatActivity {
         editButton = findViewById(R.id.buttonEdit);
         spotifyButton = findViewById(R.id.buttonSpotify);
         recyclerView = findViewById(R.id.recyclerViewTop5Artists);
+
+        navBar = findViewById(R.id.navbar);
+        navBar.setSelectedItemId(R.id.friendlist);
+        NavigationBarListener navigationBarListener = new NavigationBarListener(this,userId);
+        navBar.setOnNavigationItemSelectedListener(navigationBarListener);
 
         // Lista de usuarios para el carrusel, reemplazar con datos reales
         List<CustomArtist> artistList = new ArrayList<>();

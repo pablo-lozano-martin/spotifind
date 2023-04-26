@@ -1,7 +1,6 @@
 package com.example.spotifind.radar;
 
 
-
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -32,7 +31,9 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
 
 import com.example.spotifind.LocalUser;
+
 import android.Manifest;
+
 import com.example.spotifind.NavigationBarListener;
 import com.example.spotifind.R;
 import com.firebase.geofire.GeoFire;
@@ -72,7 +73,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class RadarActivity extends FragmentActivity implements OnMapReadyCallback, LocationListener, GoogleMap.OnCameraMoveListener, GoogleMap.OnInfoWindowClickListener{
+public class RadarActivity extends FragmentActivity implements OnMapReadyCallback, LocationListener, GoogleMap.OnCameraMoveListener, GoogleMap.OnInfoWindowClickListener {
     //private BottomNavigationView menuBar;
     private BottomNavigationView navBar;
     private GoogleMap mMap;
@@ -90,6 +91,7 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
     private CustomInfoWindowAdapter customInfoWindowAdapter;
     private boolean fijarCamara, artificialCamMove;
 
+    private Map<String, CustomInfoWindowAdapter> infoWindowAdapterCache = new HashMap<>();
     SharedPreferences sharedPref;
 
     private Context mContext;
@@ -110,23 +112,43 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
                 }
             });
 
+    private void initializeMap() {
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.map);
+        mapFragment.getMapAsync(this);
+
+        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+
+        // Solicitar actualizaciones de ubicación
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // para manejar el caso en que el usuario conceda el permiso. Consulte la documentación
+            // para ActivityCompat#requestPermissions para obtener más detalles.
+            return;
+        }
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 3000, 3, this);
+    }
+
+
+
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mContext = this;
         setContentView(R.layout.activity_radar);
         sharedPref = getSharedPreferences("preferencias", MODE_PRIVATE);
         usersToProcess = new AtomicInteger(0);
-        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         nearUsers = new ArrayList<>();
         marcadoresUsuarios = new HashMap<>();
         this.fijarCamara = true;
         this.artificialCamMove = false;
-        getUserLocation(sharedPref.getString("user_id", ""),new LocationListener() {
+        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        getUserLocation(sharedPref.getString("user_id", ""), new LocationListener() {
             private double maxLongitude = 100;
             private double maxLatitude = 100;
             private double minLongitude = -100;
-            private double minLatitude= -100;
-
+            private double minLatitude = -100;
 
             @Override
             public void onLocationReceived(LatLng location) {
@@ -137,41 +159,31 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
             }
 
             @Override
-            public void onStatusChanged(String provider, int status, Bundle extras) {}
+            public void onStatusChanged(String provider, int status, Bundle extras) {
+            }
 
             @Override
             public void onProviderEnabled(String provider) {
             }
 
             @Override
-            public void onProviderDisabled(String provider) {}
+            public void onProviderDisabled(String provider) {
+            }
         });
 
         // Comprobar permisos
-        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION)
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
-            // Permission is not granted
             ActivityCompat.requestPermissions(this,
-                    new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION},
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
                     LOCATION_PERMISSION_REQUEST_CODE);
         } else {
-            // Permission has already been granted
-            // Do something with the location
-            // Get the LocationManager
-            // Verificar si la localización está activada
             boolean isLocationEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
             if (!isLocationEnabled) {
                 showLocationSettingsDialog();
             }
 
-            SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-                    .findFragmentById(R.id.map);
-            mapFragment.getMapAsync(this);
-
-            locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-
-            // Request location updates
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 3000, 3, this);
+            initializeMap();
         }
 
         FloatingActionButton centrarFAB = findViewById(R.id.fab_center_location);
@@ -189,23 +201,23 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
 
         navBar = findViewById(R.id.navbar);
         navBar.setSelectedItemId(R.id.radar);
-        NavigationBarListener navigationBarListener = new NavigationBarListener(this,sharedPref.getString("user_id", ""));
+        NavigationBarListener navigationBarListener = new NavigationBarListener(this, sharedPref.getString("user_id", ""));
         navBar.setOnNavigationItemSelectedListener(navigationBarListener);
     }
 
-    // Handle the permission request response
+    // Manejar la respuesta de la solicitud de permisos
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // Permission granted
-                Toast.makeText(this, "Permission granted", Toast.LENGTH_SHORT).show();
-                // Do something with the location
+                // Permiso concedido
+                Toast.makeText(this, "Permiso concedido", Toast.LENGTH_SHORT).show();
+                // Hacer algo con la ubicación
                 startLocationUpdates();
             } else {
-                // Permission denied
-                Toast.makeText(this, "Permission denied", Toast.LENGTH_SHORT).show();
+                // Permiso denegado
+                Toast.makeText(this, "Permiso denegado", Toast.LENGTH_SHORT).show();
                 finish();
             }
         }
@@ -215,62 +227,60 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
         // Comprobar permisos
-        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION)
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
             // El permiso no está concedido
             ActivityCompat.requestPermissions(this,
-                    new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION},
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
                     1);
         } else {
             // El permiso ya ha sido concedido
             startLocationUpdates();
         }
 
-        // Establecer un OnCameraMoveListener para detectar movimientos en el mapa
+        // Establecer un OnCameraMoveListener para detectar movimientos en
         mMap.setOnCameraMoveListener(this);
         mMap.setOnMarkerClickListener(marker -> {
             String userId = (String) marker.getTag();
-                DatabaseReference lastPlayedSongRef = FirebaseDatabase.getInstance().getReference("users").child(userId).child("lastPlayedSong");
-                lastPlayedSongRef.addValueEventListener(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                        Track track = dataSnapshot.getValue(Track.class);
-                        if (userId != null) {
-                            if (customInfoWindowAdapter != null && customInfoWindowAdapter.isAdded()) {
-                                customInfoWindowAdapter.dismiss();
-                            }
+            DatabaseReference lastPlayedSongRef = FirebaseDatabase.getInstance().getReference("users").child(userId).child("lastPlayedSong");
+            lastPlayedSongRef.addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                    Track track = dataSnapshot.getValue(Track.class);
+                    if (userId != null) {
+                        CustomInfoWindowAdapter customInfoWindowAdapter = infoWindowAdapterCache.get(userId);
+                        if (customInfoWindowAdapter == null) {
                             customInfoWindowAdapter = new CustomInfoWindowAdapter(userId);
-                            customInfoWindowAdapter.updateData(track);
-                            customInfoWindowAdapter.show(getSupportFragmentManager(), "customInfoWindow");
-
+                            infoWindowAdapterCache.put(userId, customInfoWindowAdapter);
+                        } else if (customInfoWindowAdapter.isAdded()) {
+                            customInfoWindowAdapter.dismiss();
                         }
+                        customInfoWindowAdapter.updateData(track);
+                        customInfoWindowAdapter.show(getSupportFragmentManager(), "customInfoWindow");
                     }
-
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError databaseError) {
-                        Log.e("LocalUser", "Error al obtener información de usuario", databaseError.toException());
-                    }
-                });
+                } @Override
+                public void onCancelled(@NonNull DatabaseError databaseError) {
+                    Log.e("LocalUser", "Error al obtener información de usuario", databaseError.toException());
+                }
+            });
             return false;
         });
     }
 
-
-    // Start location updates
+    // Iniciar actualizaciones de ubicación
     private void startLocationUpdates() {
-        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION)
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED) {
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,
                     3000, 3, this);
-            lastKnownLatLng = new LatLng(locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER).getLatitude(), locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER).getLongitude());
-        }
-        else{
+            if (lastKnownLatLng != null)
+                lastKnownLatLng = new LatLng(locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER).getLatitude(), locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER).getLongitude());
+        } else {
             Toast.makeText(this, "No hay permisos de ubicación...", Toast.LENGTH_SHORT).show();
         }
     }
 
     @Override
-
     public void onLocationChanged(Location location) {
         // Actualiza la última ubicación conocida y mueve la cámara hacia ella
         lastKnownLatLng = new LatLng(location.getLatitude(), location.getLongitude());
@@ -288,12 +298,7 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
 
             getNearUsers(20000);
         }
-
     }
-
-
-    @Override
-    public void onStatusChanged(String provider, int status, Bundle extras) {}
 
     @Override
     public void onProviderEnabled(String provider) {}
@@ -303,15 +308,13 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
 
     @Override
     public void onCameraMove() {
-        if(!artificialCamMove) {
+        if (!artificialCamMove) {
             fijarCamara = false;
-            Toast.makeText(this, "Moving camera con los dedos", Toast.LENGTH_SHORT).show();
-        }
-        else{
-            Toast.makeText(this, "Moving camera artificialmente", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Moviendo cámara con los dedos", Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(this, "Moviendo cámara artificialmente", Toast.LENGTH_SHORT).show();
         }
     }
-
     private void addMarkers(List<Pair<LatLng, String>> nearUsers) {
         // Limpia todos los marcadores antiguos del mapa
         mMap.clear();

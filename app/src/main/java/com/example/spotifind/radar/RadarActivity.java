@@ -95,6 +95,7 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
     SharedPreferences sharedPref;
 
     private Context mContext;
+    private FloatingActionButton centrarFAB;
 
     private ActivityResultLauncher<String[]> requestPermissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), new ActivityResultCallback<Map<String, Boolean>>() {
@@ -188,7 +189,7 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
             initializeMap();
         }
 
-        FloatingActionButton centrarFAB = findViewById(R.id.fab_center_location);
+        centrarFAB = findViewById(R.id.fab_center_location);
 
         // Agregar el listener al botón
         centrarFAB.setOnClickListener(new View.OnClickListener() {
@@ -200,6 +201,7 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
                 fijarCamara = true;
             }
         });
+        centrarFAB.setEnabled(false);
 
         navBar = findViewById(R.id.navbar);
         navBar.setSelectedItemId(R.id.radar);
@@ -397,6 +399,8 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
                 }
             }
         }
+
+        centrarFAB.setEnabled(true);
     }
 
 

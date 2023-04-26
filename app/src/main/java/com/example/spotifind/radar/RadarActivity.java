@@ -8,6 +8,8 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -18,6 +20,7 @@ import android.provider.Settings;
 import android.util.Log;
 import android.util.Pair;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultCallback;
@@ -41,6 +44,8 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -57,6 +62,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.spotify.protocol.types.Track;
+import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -74,9 +80,6 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
     private LatLng lastKnownLatLng;
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1001;
 
-    private double minLatitude, maxLatitude;
-    private double minLongitude, maxLongitude;
-
     private List<Pair<LatLng, String>> nearUsers;
     private HashMap<String, Marker> marcadoresUsuarios;
 
@@ -85,6 +88,7 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
     private AtomicInteger usersToProcess;
 
     private CustomInfoWindowAdapter customInfoWindowAdapter;
+    private boolean fijarCamara, artificialCamMove;
 
     SharedPreferences sharedPref;
 
@@ -113,6 +117,8 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         nearUsers = new ArrayList<>();
         marcadoresUsuarios = new HashMap<>();
+        this.fijarCamara = true;
+        this.artificialCamMove = false;
         getUserLocation(sharedPref.getString("user_id", ""),new LocationListener() {
             private double maxLongitude = 100;
             private double maxLatitude = 100;
@@ -165,13 +171,16 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 3000, 3, this);
         }
 
-        FloatingActionButton centrarFAB = findViewById(R.id.centrar_fab);
+        FloatingActionButton centrarFAB = findViewById(R.id.fab_center_location);
 
         // Agregar el listener al botón
         centrarFAB.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                artificialCamMove = true;
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(lastKnownLatLng, 15));
+                artificialCamMove = false;
+                fijarCamara = true;
             }
         });
 
@@ -263,17 +272,18 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
 
     public void onLocationChanged(Location location) {
         // Actualiza la última ubicación conocida y mueve la cámara hacia ella
-        double lat = lastKnownLatLng.latitude, lon = lastKnownLatLng.longitude;
         lastKnownLatLng = new LatLng(location.getLatitude(), location.getLongitude());
         setLastKnownLatLng(lastKnownLatLng);
 
-        /*this.minLatitude = location.getLatitude() - 0.5; this.maxLatitude = location.getLatitude() + 0.5;
-        this.minLongitude = location.getLongitude() - 0.5; this.maxLongitude = location.getLongitude() + 0.5;*/
         // Mover la cámara hacia la nueva ubicación
         if (mMap != null) {
-            Toast.makeText(this, "OldLat: "+lat+" OldLon: "+lon+"\nLat: "+location.getLatitude()+" Lon: "+location.getLongitude(), Toast.LENGTH_SHORT).show();
-            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(lastKnownLatLng, 15));
-            //mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(lastKnownLatLng, 15));
+            if(fijarCamara) {
+                artificialCamMove = true;
+                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(lastKnownLatLng, 15));
+                artificialCamMove = false;
+                fijarCamara = true;
+                Log.e("fijarCamara", "true");
+            }
 
             getNearUsers(20000);
         }
@@ -292,9 +302,13 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
 
     @Override
     public void onCameraMove() {
-        // Update the last known location when the map moves
-        //lastKnownLatLng = mMap.getCameraPosition().target;
-        //Toast.makeText(this, "Moving cámera", Toast.LENGTH_SHORT).show();
+        if(!artificialCamMove) {
+            fijarCamara = false;
+            Toast.makeText(this, "Moving camera con los dedos", Toast.LENGTH_SHORT).show();
+        }
+        else{
+            Toast.makeText(this, "Moving camera artificialmente", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void addMarkers(List<Pair<LatLng, String>> nearUsers) {
@@ -320,13 +334,40 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
                 }
 
                 // Agregar el nuevo marcador y almacenarlo en el HashMap
-                Marker marker = mMap.addMarker(new MarkerOptions()
-                        .position(userLatLng)
-                        .visible(true)); // No se establece el título, pero el marcador es visible
-                marker.setTag(userId); // Asociar el ID del usuario con el marcador usando setTag()
-                marcadoresUsuarios.put(userId, marker);
+            Marker marker = mMap.addMarker(new MarkerOptions()
+                    .position(userLatLng)
+                    .visible(true));
+            marker.setTag(userId);
+            marcadoresUsuarios.put(userId, marker);
+            /*DatabaseReference lastPlayedSongRef = FirebaseDatabase.getInstance().getReference("users").child(userId).child("lastPlayedSong");
+            ImageView songImage = new ImageView(this);
+            lastPlayedSongRef.addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                    Track track = dataSnapshot.getValue(Track.class);
+                    String rawImageUri = track.imageUri.raw;
+                    String imageUrl = "https://i.scdn.co/image/" + rawImageUri.replace("spotify:image:", "");
+                    Picasso picasso = Picasso.get();
+                    picasso.load(imageUrl).fetch();
+                    picasso.load(imageUrl).priority(Picasso.Priority.HIGH).into(songImage);
+                    songImage.setDrawingCacheEnabled(true);
+                    songImage.buildDrawingCache();
+                    Bitmap bitmap = songImage.getDrawingCache();
+                    Marker marker = mMap.addMarker(new MarkerOptions()
+                            .position(userLatLng)
+                            .icon(BitmapDescriptorFactory.fromBitmap(bitmap))
+                            .visible(true));
+                    marker.setTag(userId);
+                    marcadoresUsuarios.put(userId, marker);
+                }
 
-                // Actualiza la ubicación del usuario más cercano
+                @Override
+                public void onCancelled(@NonNull DatabaseError databaseError) {
+                    Log.e("LocalUser", "Error al obtener información de usuario", databaseError.toException());
+                }
+            });*/
+
+            // Actualiza la ubicación del usuario más cercano
                 float[] results = new float[1];
                 Location.distanceBetween(mMap.getCameraPosition().target.latitude, mMap.getCameraPosition().target.longitude,
                         userLatLng.latitude, userLatLng.longitude, results);
@@ -339,8 +380,11 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
             // Verifica si se han procesado todos los usuarios
             if (usersProcessed.incrementAndGet() == nearUsers.size()) {
                 // Mueve la cámara a la ubicación del usuario más cercano
-                if (nearestUserLatLng.get() != null) {
+                if (nearestUserLatLng.get() != null && fijarCamara) {
+                    artificialCamMove = true;
                     mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(nearestUserLatLng.get(), 15));
+                    artificialCamMove = false;
+                    fijarCamara = true;
                 }
             }
         }

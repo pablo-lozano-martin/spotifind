@@ -56,7 +56,6 @@ public class LocalUser {
     public void setContext(Context context) {
         this.context = context;
     }
-    //private List<LocalUser> friendList;
 
     private String spotitoken;
 

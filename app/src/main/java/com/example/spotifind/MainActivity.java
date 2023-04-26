@@ -95,15 +95,19 @@ public class MainActivity extends AppCompatActivity {
                     // Actualizar la última canción reproducida en Firebase
                     databaseRef.child("lastPlayedSong").setValue(track);
                     Log.d("LocalUser", "Última canción reproducida actualizada en Firebase");
-                }
-                else{
+                } else {
                     databaseRef.child("lastPlayedSong").addListenerForSingleValueEvent(new ValueEventListener() {
-                        @Override public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot snapshot) {
                             Track lastPlayedSong = snapshot.getValue(Track.class);
-                            if(lastPlayedSong == null){
+                            if (lastPlayedSong == null) {
                                 // Reproducir una canción predeterminada en Spotify
                                 mSpotifyAppRemote.getPlayerApi().play("spotify:track:6rqhFgbbKwnb9MLmUQDhG6");
-                                Log.d("LocalUser", "Reproduciendo una canción predeterminada en Firebase");
+                                Log.d("LocalUser", "Reproduciendo una canción predeterminada en Spotify");
+                                mSpotifyAppRemote.getPlayerApi().subscribeToPlayerState().setEventCallback(playerState ->{
+                                    databaseRef.child("lastPlayedSong").setValue(playerState.track);
+                                    Log.d("LocalUser", "Guardando la canción predeterminada en Firebase");
+                                });
                             }
                         }
 
@@ -115,6 +119,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
         }
+
 
         @Override
         public void onFailure(Throwable error) {

@@ -55,7 +55,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
         // Crear un intent para abrir el perfil del usuario emisor en tu aplicación
         Intent intent = new Intent(this, ProfileActivity.class);
-        intent.putExtra("USER_UID", senderUid);
+        intent.putExtra("user_id", senderUid);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
 
         // Crear la notificación y asociar el intent

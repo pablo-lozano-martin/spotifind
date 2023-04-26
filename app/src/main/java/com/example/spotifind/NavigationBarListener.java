@@ -8,6 +8,7 @@ import android.view.MenuItem;
 import androidx.annotation.NonNull;
 
 import com.example.spotifind.friendlist.FriendlistActivity;
+import com.example.spotifind.profile.ProfileActivity;
 import com.example.spotifind.radar.RadarActivity;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
@@ -37,8 +38,9 @@ public class NavigationBarListener implements BottomNavigationView.OnNavigationI
                 break;
             case R.id.profile:
                 // Navegar a la actividad de perfil
-                /*Intent profile = new Intent(mContext, ProfileActivity.class);
-                mContext.startActivity(profile);*/
+                Intent profile = new Intent(mContext, ProfileActivity.class);
+                profile.putExtra("user_id",uid);
+                mContext.startActivity(profile);
                 Log.d("NavigationBarListener", "Se ha pulsado perfil");
                 break;
         }

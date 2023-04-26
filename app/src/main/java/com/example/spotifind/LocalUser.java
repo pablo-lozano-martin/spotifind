@@ -51,9 +51,6 @@ public class LocalUser {
     private Track lastPlayedSong;
     private List<CustomTrack> top5Songs;
 
-    private static LocalUser instance;
-    private static FirebaseUser currentUser;
-
     public Context getContext() {
         return context;
     }
@@ -119,8 +116,6 @@ public class LocalUser {
 
     public LocalUser(Context context) {
 
-        currentUser = FirebaseAuth.getInstance().getCurrentUser();
-
         this.context = context;
         context.getSharedPreferences("preferencias", Context.MODE_PRIVATE);
         this.spotitoken= getSpotifyAuthToken(context);
@@ -129,9 +124,10 @@ public class LocalUser {
             }
 
         if (context != null) {
-            initializeDataFromCache();
-            // Tu código aquí
-        } else {
+            initializeMyDataFromCache();
+        }
+
+        else {
            getDataFromFirebase();
         }
 
@@ -148,17 +144,30 @@ public class LocalUser {
         }
     }
 
-    public static synchronized LocalUser getInstance() {
-        if (instance == null) {
-            instance = new LocalUser();
+    public LocalUser(Context context,String uid){
+        this.context = context;
+        context.getSharedPreferences("preferencias", Context.MODE_PRIVATE);
+        this.uid=uid;
+        if (context != null) {
+            initializeOtherFromCache();
         }
-        return instance;
-    }
 
-    public static FirebaseUser getCurrentUser() {
-        return currentUser;
-    }
+        else {
+            getDataFromFirebase();
+        }
 
+        String topArtistsJson = getDataFromCache(context, "TOP_ARTISTS");
+        String topTracksJson = getDataFromCache(context, "TOP_TRACKS");
+        if (topArtistsJson != null && topTracksJson != null) {
+            Type artistListType = new TypeToken<List<CustomArtist>>(){}.getType();
+            top5Artists = new Gson().fromJson(topArtistsJson, artistListType);
+            Type trackListType = new TypeToken<List<CustomTrack>>(){}.getType();
+            top5Songs = new Gson().fromJson(topTracksJson, trackListType);
+        }
+        else{
+            getSpotifyStats();
+        }
+    }
 
     private void updateTop5Artists(List<CustomArtist> artists) {
         List<CustomArtist> artistPairs = new ArrayList<>();
@@ -219,20 +228,6 @@ public class LocalUser {
         });
         albumImageUriService.execute(new Pair<>("tracks", trackIds));
     }
-
-//    public void addFriend(LocalUser friend) {
-//        friendList.add(friend);
-//    }
-//
-//    public void removeFriend(LocalUser friend) {
-//        friendList.remove(friend);
-//    }
-//
-//    public List<LocalUser> getFriendList() {
-//        return friendList;
-//    }
-
-
     public String getUid() {
         return uid;
     }
@@ -296,6 +291,20 @@ public class LocalUser {
         return sharedPreferences.getString(key, null);
     }
 
+
+
+    private void saveOtherDataToCache(Context context,String key, String jsonData) {
+        SharedPreferences sharedPreferences = context.getSharedPreferences("preferencias", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putString(uid + "_" + key, jsonData);
+        editor.apply();
+    }
+
+    private String getOtherDataFromCache(String key) {
+        SharedPreferences sharedPreferences = context.getSharedPreferences("preferencias", Context.MODE_PRIVATE);
+        return sharedPreferences.getString(uid + "_" + key, null);
+    }
+
     public String getSpotifyAuthToken(Context context) {
         SharedPreferences sharedPreferences = context.getSharedPreferences("preferencias", Context.MODE_PRIVATE);
         return sharedPreferences.getString("access_token", null);
@@ -341,7 +350,7 @@ public class LocalUser {
         }
         return null;
     }
-    private void initializeDataFromCache() {
+    private void initializeMyDataFromCache() {
 
         List<LocalUser> cachedFriendList = getFriendListFromCache(context);
         String uid = getDataFromCache(context, "user_id");
@@ -370,6 +379,34 @@ public class LocalUser {
             this.friendList = cachedFriendList;
         }
 
+        if (username == null || fcmToken == null || uid == null) {
+            getDataFromFirebase();
+        }
+    }
+
+
+    private void initializeOtherFromCache() {
+
+        List<LocalUser> cachedFriendList = getFriendListFromCache(context);
+        String username = getDataFromCache(context, "username");
+        String email = getDataFromCache(context, "email");
+        String fcmToken = getDataFromCache(context, "fcmToken");
+
+        if (username != null) {
+            this.username = new Gson().fromJson(username, String.class);
+        }
+
+        if (email != null) {
+            this.email = new Gson().fromJson(email, String.class);
+        }
+
+        if (fcmToken != null) {
+            this.fcmToken = new Gson().fromJson(fcmToken, String.class);
+        }
+
+        if (cachedFriendList != null) {
+            this.friendList = cachedFriendList;
+        }
         if (username == null || fcmToken == null || uid == null) {
             getDataFromFirebase();
         }

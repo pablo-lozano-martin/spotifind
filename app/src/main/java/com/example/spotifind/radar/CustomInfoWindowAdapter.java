@@ -86,6 +86,7 @@ public class CustomInfoWindowAdapter extends DialogFragment {
             marker.setIcon(BitmapDescriptorFactory.defaultMarker());
             marker.hideInfoWindow();
             isClosed=true;
+            dismiss();
         });
 
 
@@ -97,7 +98,7 @@ public class CustomInfoWindowAdapter extends DialogFragment {
         // Obtén el token FCM del usuario local desde la base de datos de Firebase Realtime
         MainActivity.mFirebaseService.getFcmToken(localUserId, receiverFcmToken -> {
             // Configura la notificación con el título, el mensaje y la información adicional necesaria.
-            String senderUid = "EMISOR_UID";
+            String senderUid = getActivity().getSharedPreferences("preferencias", Context.MODE_PRIVATE).getString("user_id", "");;
             String title = "Solicitud de amistad";
             String body = "¡Tienes una nueva solicitud de amistad!";
 

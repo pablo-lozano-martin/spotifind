@@ -1,4 +1,4 @@
-package com.example.spotifind;
+package com.example.spotifind.profile;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;

@@ -1,6 +1,8 @@
 package com.example.spotifind.profile;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -28,32 +30,35 @@ public class ProfileActivity extends AppCompatActivity {
     private ImageButton editButton;
     private Button spotifyButton;
     private RecyclerView recyclerView;
+    private String uid;
+    private LocalUser user;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.profile);
+        uid = getIntent().getStringExtra("user_id");
+        saveDataToCache(this, "profile_uid",uid);
+        LocalUser user= new LocalUser(this);
+        setInterface(user);
+    }
 
+    private void setInterface(LocalUser user){
         textNickname = findViewById(R.id.textNickname);
         userImage = findViewById(R.id.imageView);
         editButton = findViewById(R.id.buttonEdit);
         spotifyButton = findViewById(R.id.buttonSpotify);
         recyclerView = findViewById(R.id.recyclerViewTop5Artists);
 
-        // Lista de usuarios para el carrusel, reemplazar con datos reales
-        List<CustomArtist> artistList = new ArrayList<>();
+        textNickname.setText(user.getUsername());
+
 
         // Configurar el adaptador y el RecyclerView
         recyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
 
-        CardAdapter cardAdapter = new CardAdapter(artistList, null, this);
-        recyclerView.setAdapter(cardAdapter);
-
-        FirebaseUser currentUser = LocalUser.getCurrentUser();
-        Intent profileIntent = new Intent(this, ProfileActivity.class);
-        profileIntent.putExtra("username", currentUser.getDisplayName());
-        profileIntent.putExtra("userImage", currentUser.getPhotoUrl());
-        startActivity(profileIntent);
+        CardAdapter ArtistCardAdapter = new CardAdapter( user.getTop5Artists(),null, this);
+        CardAdapter SongsCardAdapter = new CardAdapter(null,user.getTop5Songs(),this);
+            recyclerView.setAdapter(SongsCardAdapter);
 
         // Listener botón editar el perfil
         editButton.setOnClickListener(new View.OnClickListener() {
@@ -70,5 +75,13 @@ public class ProfileActivity extends AppCompatActivity {
                 // REDIRIGIR A SPOTIFY
             }
         });
+    }
+
+
+    private void saveDataToCache(Context context, String key, String jsonData) {
+        SharedPreferences sharedPreferences = context.getSharedPreferences("preferencias", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putString(key, jsonData);
+        editor.apply();
     }
 }

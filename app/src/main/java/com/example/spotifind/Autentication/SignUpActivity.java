@@ -160,6 +160,7 @@ public class SignUpActivity extends AppCompatActivity {
                             Map<String, Object> userMap = new HashMap<>();
                             userMap.put("uid", userId);
                             userMap.put("username", username);
+                            userMap.put("email",email);
 
                             // Guardar la información del usuario en la base de datos en tiempo real de Firebase
                             mDatabase.child("users").child(userId).setValue(userMap);

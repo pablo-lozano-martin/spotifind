@@ -39,14 +39,10 @@ public class NavigationBarListener implements BottomNavigationView.OnNavigationI
             case R.id.profile:
                 // Navegar a la actividad de perfil
                 Intent profile = new Intent(mContext, ProfileActivity.class);
-                profile.putExtra("user_id",uid);
+                profile.putExtra("user_id", uid);
                 mContext.startActivity(profile);
-                Log.d("NavigationBarListener", "Se ha pulsado perfil");
                 break;
         }
-
-        // Cerrar el menú de navegación después de seleccionar un elemento
-        //((Activity) mContext).findViewById(R.id.drawer_layout).closeDrawer(GravityCompat.START);
 
         return true;
     }

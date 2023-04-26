@@ -12,6 +12,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -22,6 +23,11 @@ import androidx.fragment.app.FragmentTransaction;
 
 import com.example.spotifind.LocalUser;
 import com.example.spotifind.R;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.Marker;
+import com.google.firebase.database.ChildEventListener;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.ValueEventListener;
 import com.spotify.protocol.types.Track;
 import com.squareup.picasso.Picasso;
 
@@ -34,10 +40,16 @@ public class CustomInfoWindowAdapter extends DialogFragment {
     private Track track;
 
     ImageView songImage;
+    private DatabaseReference lastPlayedSongRef;
+    private Marker marker;
 
-    public CustomInfoWindowAdapter(String user) {
+    private boolean isClosed;
+
+    public CustomInfoWindowAdapter(String user, Marker marker) {
         this.user = user;
         this.track = new Track(null,null, null ,0, null , null, null, false,false);
+        this.marker=marker;
+        this.isClosed= false;
     }
 
     @NonNull
@@ -52,6 +64,7 @@ public class CustomInfoWindowAdapter extends DialogFragment {
         Button openSpotifyButton = view.findViewById(R.id.open_spotify_button);
         ImageView songImage = view.findViewById(R.id.song_image);
         songName.setText(track.name);
+        ImageButton closeButton = view.findViewById(R.id.close_button);
 
         String rawImageUri = track.imageUri.raw;
         String imageUrl = "https://i.scdn.co/image/" + rawImageUri.replace("spotify:image:", "");
@@ -67,6 +80,12 @@ public class CustomInfoWindowAdapter extends DialogFragment {
         Button sendFriendRequestButton = view.findViewById(R.id.send_friend_request_button);
         sendFriendRequestButton.setOnClickListener(v -> {
             sendFriendRequestNotification(user);
+        });
+
+        closeButton.setOnClickListener(v -> {
+            marker.setIcon(BitmapDescriptorFactory.defaultMarker());
+            marker.hideInfoWindow();
+            isClosed=true;
         });
 
 
@@ -104,4 +123,7 @@ public class CustomInfoWindowAdapter extends DialogFragment {
         startActivity(intent);
     }
 
+    public boolean isClosed(){
+        return this.isClosed;
+    }
 }

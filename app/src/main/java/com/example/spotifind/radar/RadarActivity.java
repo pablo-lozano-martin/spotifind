@@ -156,6 +156,8 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
 
             @Override
             public void onLocationChanged(Location location) {
+                lastKnownLatLng = new LatLng(location.getLatitude(), location.getLongitude());
+                setLastKnownLatLng(lastKnownLatLng);
             }
 
             @Override
@@ -248,17 +250,20 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
                 public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                     Track track = dataSnapshot.getValue(Track.class);
                     if (userId != null) {
-                        CustomInfoWindowAdapter customInfoWindowAdapter = infoWindowAdapterCache.get(userId);
-                        if (customInfoWindowAdapter == null) {
-                            customInfoWindowAdapter = new CustomInfoWindowAdapter(userId);
-                            infoWindowAdapterCache.put(userId, customInfoWindowAdapter);
-                        } else if (customInfoWindowAdapter.isAdded()) {
+                        if (customInfoWindowAdapter != null && customInfoWindowAdapter.isAdded()) {
                             customInfoWindowAdapter.dismiss();
                         }
+                        customInfoWindowAdapter = new CustomInfoWindowAdapter(userId, marker);
                         customInfoWindowAdapter.updateData(track);
                         customInfoWindowAdapter.show(getSupportFragmentManager(), "customInfoWindow");
+                        if (customInfoWindowAdapter.isClosed()) {
+                            lastPlayedSongRef.removeEventListener(this);
+                        }
                     }
-                } @Override
+
+                }
+
+                @Override
                 public void onCancelled(@NonNull DatabaseError databaseError) {
                     Log.e("LocalUser", "Error al obtener información de usuario", databaseError.toException());
                 }

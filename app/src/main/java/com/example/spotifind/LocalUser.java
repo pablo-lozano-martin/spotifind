@@ -50,6 +50,10 @@ public class LocalUser {
     private List<CustomArtist> top5Artists;
     private Track lastPlayedSong;
     private List<CustomTrack> top5Songs;
+
+    private static LocalUser instance;
+    private static FirebaseUser currentUser;
+
     public Context getContext() {
         return context;
     }
@@ -114,6 +118,9 @@ public class LocalUser {
 
 
     public LocalUser(Context context) {
+
+        currentUser = FirebaseAuth.getInstance().getCurrentUser();
+
         this.context = context;
         context.getSharedPreferences("preferencias", Context.MODE_PRIVATE);
         this.spotitoken= getSpotifyAuthToken(context);
@@ -139,6 +146,17 @@ public class LocalUser {
         else{
             getSpotifyStats();
         }
+    }
+
+    public static synchronized LocalUser getInstance() {
+        if (instance == null) {
+            instance = new LocalUser();
+        }
+        return instance;
+    }
+
+    public static FirebaseUser getCurrentUser() {
+        return currentUser;
     }
 
 
@@ -449,4 +467,6 @@ public class LocalUser {
         artistSpotifyService.execute();
         trackSpotifyService.execute();
     }
+
+
 }

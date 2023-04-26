@@ -1,5 +1,6 @@
 package com.example.spotifind.profile;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -12,8 +13,10 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.spotifind.CardAdapter;
+import com.example.spotifind.LocalUser;
 import com.example.spotifind.R;
 import com.example.spotifind.Spotify.CustomArtist;
+import com.google.firebase.auth.FirebaseUser;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,6 +48,12 @@ public class ProfileActivity extends AppCompatActivity {
 
         CardAdapter cardAdapter = new CardAdapter(artistList, null, this);
         recyclerView.setAdapter(cardAdapter);
+
+        FirebaseUser currentUser = LocalUser.getCurrentUser();
+        Intent profileIntent = new Intent(this, ProfileActivity.class);
+        profileIntent.putExtra("username", currentUser.getDisplayName());
+        profileIntent.putExtra("userImage", currentUser.getPhotoUrl());
+        startActivity(profileIntent);
 
         // Listener botón editar el perfil
         editButton.setOnClickListener(new View.OnClickListener() {

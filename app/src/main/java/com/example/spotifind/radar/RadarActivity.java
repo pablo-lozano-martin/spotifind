@@ -247,7 +247,7 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
         mMap.setOnMarkerClickListener(marker -> {
             String userId = (String) marker.getTag();
             DatabaseReference lastPlayedSongRef = FirebaseDatabase.getInstance().getReference("users").child(userId).child("lastPlayedSong");
-            lastPlayedSongRef.addValueEventListener(new ValueEventListener() {
+            ValueEventListener valueEventListener = new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                     Track track = dataSnapshot.getValue(Track.class);
@@ -255,23 +255,21 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
                         if (customInfoWindowAdapter != null && customInfoWindowAdapter.isAdded()) {
                             customInfoWindowAdapter.dismiss();
                         }
-                        customInfoWindowAdapter = new CustomInfoWindowAdapter(userId, marker);
+                        customInfoWindowAdapter = new CustomInfoWindowAdapter(userId, marker, lastPlayedSongRef, this);
                         customInfoWindowAdapter.updateData(track);
                         customInfoWindowAdapter.show(getSupportFragmentManager(), "customInfoWindow");
-                        if (customInfoWindowAdapter.isClosed()) {
-                            lastPlayedSongRef.removeEventListener(this);
-                        }
                     }
-
                 }
 
                 @Override
                 public void onCancelled(@NonNull DatabaseError databaseError) {
                     Log.e("LocalUser", "Error al obtener información de usuario", databaseError.toException());
                 }
-            });
+            };
+            lastPlayedSongRef.addValueEventListener(valueEventListener);
             return false;
         });
+
     }
 
     // Iniciar actualizaciones de ubicación

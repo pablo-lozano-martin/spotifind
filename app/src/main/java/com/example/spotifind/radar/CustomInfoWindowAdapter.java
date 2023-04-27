@@ -36,6 +36,7 @@ import org.json.JSONObject;
 
 public class CustomInfoWindowAdapter extends DialogFragment {
 
+    private final ValueEventListener valueEventListener;
     private String user;
     private Track track;
 
@@ -45,11 +46,13 @@ public class CustomInfoWindowAdapter extends DialogFragment {
 
     private boolean isClosed;
 
-    public CustomInfoWindowAdapter(String user, Marker marker) {
+    public CustomInfoWindowAdapter(String user, Marker marker, DatabaseReference lastPlayedSongRef, ValueEventListener valueEventListener) {
         this.user = user;
         this.track = new Track(null,null, null ,0, null , null, null, false,false);
         this.marker=marker;
         this.isClosed= false;
+        this.lastPlayedSongRef = lastPlayedSongRef;
+        this.valueEventListener = valueEventListener;
     }
 
     @NonNull
@@ -86,8 +89,10 @@ public class CustomInfoWindowAdapter extends DialogFragment {
             marker.setIcon(BitmapDescriptorFactory.defaultMarker());
             marker.hideInfoWindow();
             isClosed=true;
+            lastPlayedSongRef.removeEventListener(valueEventListener);
             dismiss();
         });
+
 
 
         builder.setView(view);

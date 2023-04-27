@@ -115,59 +115,60 @@ public class LocalUser {
 
 
     public LocalUser(Context context) {
-
         this.context = context;
         context.getSharedPreferences("preferencias", Context.MODE_PRIVATE);
-        this.spotitoken= getSpotifyAuthToken(context);
-            if(spotitoken==null){
-                MainActivity.getToken();
-            }
+        this.spotitoken = getSpotifyAuthToken(context);
 
-        if (context != null) {
+        if (spotitoken == null) {
+            MainActivity.getToken();
+        }
+
+        this.uid = getDataFromCache(context, "user_id");
+        initializeMyDataFromCache();
+
+        String topArtistsJson = getDataFromCache(context, "TOP_ARTISTS");
+        String topTracksJson = getDataFromCache(context, "TOP_TRACKS");
+
+        if (topArtistsJson != null && topTracksJson != null) {
+            Type artistListType = new TypeToken<List<CustomArtist>>(){}.getType();
+            top5Artists = new Gson().fromJson(topArtistsJson, artistListType);
+            Type trackListType = new TypeToken<List<CustomTrack>>(){}.getType();
+            top5Songs = new Gson().fromJson(topTracksJson, trackListType);
+        } else {
+            getSpotifyStats();
+        }
+    }
+
+    public LocalUser(Context context, String uid) {
+        this.context = context;
+        context.getSharedPreferences("preferencias", Context.MODE_PRIVATE);
+        this.spotitoken = getSpotifyAuthToken(context);
+
+        if (spotitoken == null) {
+            MainActivity.getToken();
+        }
+
+        if (uid != null) {
+            this.uid = uid;
+            initializeOtherFromCache();
+        } else {
+            this.uid = getDataFromCache(context, "user_id");
             initializeMyDataFromCache();
         }
 
-        else {
-           getDataFromFirebase();
-        }
-
         String topArtistsJson = getDataFromCache(context, "TOP_ARTISTS");
         String topTracksJson = getDataFromCache(context, "TOP_TRACKS");
+
         if (topArtistsJson != null && topTracksJson != null) {
             Type artistListType = new TypeToken<List<CustomArtist>>(){}.getType();
             top5Artists = new Gson().fromJson(topArtistsJson, artistListType);
             Type trackListType = new TypeToken<List<CustomTrack>>(){}.getType();
             top5Songs = new Gson().fromJson(topTracksJson, trackListType);
-        }
-        else{
+        } else {
             getSpotifyStats();
         }
     }
 
-    public LocalUser(Context context,String uid){
-        this.context = context;
-        context.getSharedPreferences("preferencias", Context.MODE_PRIVATE);
-        this.uid=uid;
-        if (context != null) {
-            initializeOtherFromCache();
-        }
-
-        else {
-            getDataFromFirebase();
-        }
-
-        String topArtistsJson = getDataFromCache(context, "TOP_ARTISTS");
-        String topTracksJson = getDataFromCache(context, "TOP_TRACKS");
-        if (topArtistsJson != null && topTracksJson != null) {
-            Type artistListType = new TypeToken<List<CustomArtist>>(){}.getType();
-            top5Artists = new Gson().fromJson(topArtistsJson, artistListType);
-            Type trackListType = new TypeToken<List<CustomTrack>>(){}.getType();
-            top5Songs = new Gson().fromJson(topTracksJson, trackListType);
-        }
-        else{
-            getSpotifyStats();
-        }
-    }
 
     private void updateTop5Artists(List<CustomArtist> artists) {
         List<CustomArtist> artistPairs = new ArrayList<>();
@@ -230,53 +231,6 @@ public class LocalUser {
     }
     public String getUid() {
         return uid;
-    }
-
-    public Track getLastPlayedSong() {
-        return lastPlayedSong;
-    }
-
-    public void setLastPlayedSong(Track lastPlayedSong) {
-        this.lastPlayedSong = lastPlayedSong;
-        // Get DatabaseReference for user's object in Firebase
-        DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference("users").child(this.getUid());
-        // Update last played song in Firebase
-        databaseRef.child("lastPlayedSong").setValue(lastPlayedSong);
-        Log.d("LocalUser", "Last played song updated in Firebase");
-    }
-
-    public List<CustomTrack> getTop5Songs() {
-        return top5Songs;
-    }
-
-    public List<CustomArtist> getTop5Artists() {
-        return top5Artists;
-    }
-
-    public void setTop5Songs(List<CustomTrack> top5Songs) {
-        this.top5Songs = top5Songs;
-        DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference("users").child(getUid());
-
-        if (top5Songs != null) {
-            // Update Top 5 Songs in Firebase
-            databaseRef.child("top5Songs").setValue(top5Songs);
-            Log.d("LocalUser", "Top5Songs updated in Firebase");
-        } else {
-            Log.w("LocalUser", "Cannot update Top5Songs in Firebase, top5Songs is null");
-        }
-    }
-
-    public void setTop5Artists(List<CustomArtist> top5Artists) {
-        this.top5Artists = top5Artists;
-        DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference("users").child(getUid());
-
-        if (top5Artists != null) {
-            // Update Top 5 Artists in Firebase
-            databaseRef.child("top5Artists").setValue(top5Artists);
-            Log.d("LocalUser", "Top5Artists updated in Firebase");
-        } else {
-            Log.w("LocalUser", "Cannot update Top5Artists in Firebase, top5Artists is null");
-        }
     }
 
     private void saveDataToCache(Context context, String key, String jsonData) {
@@ -466,6 +420,12 @@ public class LocalUser {
     }
 
 
+
+
+    ////////////////////////////
+    //////////Spotify Statistics
+    ////////////////////////////
+
     private void getSpotifyStats(){
         SpotifyService artistSpotifyService = new SpotifyService(
                 spotitoken,
@@ -506,4 +466,50 @@ public class LocalUser {
     }
 
 
+    public Track getLastPlayedSong() {
+        return lastPlayedSong;
+    }
+
+    public void setLastPlayedSong(Track lastPlayedSong) {
+        this.lastPlayedSong = lastPlayedSong;
+        // Get DatabaseReference for user's object in Firebase
+        DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference("users").child(this.getUid());
+        // Update last played song in Firebase
+        databaseRef.child("lastPlayedSong").setValue(lastPlayedSong);
+        Log.d("LocalUser", "Last played song updated in Firebase");
+    }
+
+    public List<CustomTrack> getTop5Songs() {
+        return top5Songs;
+    }
+
+    public List<CustomArtist> getTop5Artists() {
+        return top5Artists;
+    }
+
+    public void setTop5Songs(List<CustomTrack> top5Songs) {
+        this.top5Songs = top5Songs;
+        DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference("users").child(getUid());
+
+        if (top5Songs != null) {
+            // Update Top 5 Songs in Firebase
+            databaseRef.child("top5Songs").setValue(top5Songs);
+            Log.d("LocalUser", "Top5Songs updated in Firebase");
+        } else {
+            Log.w("LocalUser", "Cannot update Top5Songs in Firebase, top5Songs is null");
+        }
+    }
+
+    public void setTop5Artists(List<CustomArtist> top5Artists) {
+        this.top5Artists = top5Artists;
+        DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference("users").child(getUid());
+
+        if (top5Artists != null) {
+            // Update Top 5 Artists in Firebase
+            databaseRef.child("top5Artists").setValue(top5Artists);
+            Log.d("LocalUser", "Top5Artists updated in Firebase");
+        } else {
+            Log.w("LocalUser", "Cannot update Top5Artists in Firebase, top5Artists is null");
+        }
+    }
 }

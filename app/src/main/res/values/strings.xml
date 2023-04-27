@@ -6,5 +6,7 @@
     <string name="close_button_description">Cerrar carta</string>
     <string name="profile_image">Foto de perfil del usuario</string>
     <string name="CHANNEL_ID">CHANNEL_ID</string>
+    <string name="dit_button_description">Editar perfil</string>
+    <string name="edit_button_description">Editar perfil</string>
 
 </resources>

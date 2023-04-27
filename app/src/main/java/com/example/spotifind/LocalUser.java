@@ -482,7 +482,7 @@ public class LocalUser {
 
     public void setTop5Songs(List<CustomTrack> top5Songs) {
         this.top5Songs = top5Songs;
-        DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference("users").child(getUid());
+        DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference("users").child(this.uid);
 
         if (top5Songs != null) {
             // Update Top 5 Songs in Firebase
@@ -495,7 +495,7 @@ public class LocalUser {
 
     public void setTop5Artists(List<CustomArtist> top5Artists) {
         this.top5Artists = top5Artists;
-        DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference("users").child(getUid());
+        DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference("users").child(this.uid);
 
         if (top5Artists != null) {
             // Update Top 5 Artists in Firebase

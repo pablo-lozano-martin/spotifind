@@ -89,7 +89,7 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
     private AtomicInteger usersToProcess;
 
     private CustomInfoWindowAdapter customInfoWindowAdapter;
-    private boolean fijarCamara, artificialCamMove;
+    private boolean fijarCamara, artificialCamMove, mapReady, locationReady;
 
     private Map<String, CustomInfoWindowAdapter> infoWindowAdapterCache = new HashMap<>();
     SharedPreferences sharedPref;
@@ -144,6 +144,8 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
         marcadoresUsuarios = new HashMap<>();
         this.fijarCamara = true;
         this.artificialCamMove = false;
+        this.mapReady = false;
+        this.locationReady = false;
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         getUserLocation(sharedPref.getString("user_id", ""), new LocationListener() {
             private double maxLongitude = 100;
@@ -153,12 +155,27 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
 
             @Override
             public void onLocationReceived(LatLng location) {
+                locationReady = true;Log.e("locationreceived", "yes, mr: "+mapReady+" lr: "+locationReady);
+                lastKnownLatLng = new LatLng(location.latitude, location.longitude);
+                setLastKnownLatLng(lastKnownLatLng);
+                if(mapReady && locationReady){
+                    mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(lastKnownLatLng, 15));
+                    getNearUsers(20000);
+                }
+                else{
+                    /*Intent radar = new Intent(mContext, RadarActivity.class);
+                    radar.putExtra("user_id","nadie");
+                    mContext.startActivity(radar);*/
+                }
             }
 
             @Override
             public void onLocationChanged(Location location) {
-                lastKnownLatLng = new LatLng(location.getLatitude(), location.getLongitude());
-                setLastKnownLatLng(lastKnownLatLng);
+                /*if(mapReady && locationReady){
+                    lastKnownLatLng = new LatLng(location.getLatitude(), location.getLongitude());
+                    setLastKnownLatLng(lastKnownLatLng);
+                    mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(lastKnownLatLng, 15));
+                }*/
             }
 
             @Override
@@ -230,6 +247,10 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
+        this.mapReady = true;Log.e("Onmapready", "mr: "+mapReady+" lr: "+locationReady);
+        if(mapReady && locationReady){
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(lastKnownLatLng, 15));
+        }
         // Comprobar permisos
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
@@ -269,7 +290,6 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
             lastPlayedSongRef.addValueEventListener(valueEventListener);
             return false;
         });
-
     }
 
     // Iniciar actualizaciones de ubicación
@@ -298,7 +318,7 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(lastKnownLatLng, 15));
                 artificialCamMove = false;
                 fijarCamara = true;
-                Log.e("fijarCamara", "true");
+                Log.e("fijarCamara", "true");Toast.makeText(this, "Cámara fija", Toast.LENGTH_SHORT).show();
             }
 
             getNearUsers(20000);
@@ -315,9 +335,10 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
     public void onCameraMove() {
         if (!artificialCamMove) {
             fijarCamara = false;
-            Toast.makeText(this, "Moviendo cámara con los dedos", Toast.LENGTH_SHORT).show();
+            //Toast.makeText(this, "Moviendo cámara con los dedos", Toast.LENGTH_SHORT).show();
         } else {
-            Toast.makeText(this, "Moviendo cámara artificialmente", Toast.LENGTH_SHORT).show();
+            //Toast.makeText(this, "Moviendo cámara artificialmente", Toast.LENGTH_SHORT).show();
+            fijarCamara = true;
         }
     }
     private void addMarkers(List<Pair<LatLng, String>> nearUsers) {
@@ -348,33 +369,6 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
                     .visible(true));
             marker.setTag(userId);
             marcadoresUsuarios.put(userId, marker);
-            /*DatabaseReference lastPlayedSongRef = FirebaseDatabase.getInstance().getReference("users").child(userId).child("lastPlayedSong");
-            ImageView songImage = new ImageView(this);
-            lastPlayedSongRef.addValueEventListener(new ValueEventListener() {
-                @Override
-                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                    Track track = dataSnapshot.getValue(Track.class);
-                    String rawImageUri = track.imageUri.raw;
-                    String imageUrl = "https://i.scdn.co/image/" + rawImageUri.replace("spotify:image:", "");
-                    Picasso picasso = Picasso.get();
-                    picasso.load(imageUrl).fetch();
-                    picasso.load(imageUrl).priority(Picasso.Priority.HIGH).into(songImage);
-                    songImage.setDrawingCacheEnabled(true);
-                    songImage.buildDrawingCache();
-                    Bitmap bitmap = songImage.getDrawingCache();
-                    Marker marker = mMap.addMarker(new MarkerOptions()
-                            .position(userLatLng)
-                            .icon(BitmapDescriptorFactory.fromBitmap(bitmap))
-                            .visible(true));
-                    marker.setTag(userId);
-                    marcadoresUsuarios.put(userId, marker);
-                }
-
-                @Override
-                public void onCancelled(@NonNull DatabaseError databaseError) {
-                    Log.e("LocalUser", "Error al obtener información de usuario", databaseError.toException());
-                }
-            });*/
 
             // Actualiza la ubicación del usuario más cercano
                 float[] results = new float[1];

@@ -40,5 +40,16 @@ public class ProfileActivity extends AppCompatActivity {
         boolean isPrivateProfile = currentUserUid.equals(uid);
         fragmentTransaction.add(R.id.fragment_container, ProfileFragment.newInstance(isPrivateProfile, uid));
         fragmentTransaction.commit();
+
+        // Verificar si la actividad se inició a través de una notificación
+        boolean fromNotification = getIntent().getBooleanExtra("from_notification", false);
+        if (fromNotification && !isPrivateProfile) {
+            // Si la actividad se inició a través de una notificación y el perfil no es privado, establece isPrivateProfile en false
+            FragmentTransaction newFragmentTransaction = fragmentManager.beginTransaction();
+            newFragmentTransaction.replace(R.id.fragment_container, ProfileFragment.newInstance(false, uid));
+            newFragmentTransaction.commit();
+        }
     }
+
+
 }

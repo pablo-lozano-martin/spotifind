@@ -56,9 +56,10 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         // Crear un intent para abrir el perfil del usuario emisor en tu aplicación
         Intent intent = new Intent(this, ProfileActivity.class);
         intent.putExtra("user_id", senderUid);
+        intent.putExtra("from_notification", true);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
 
-        // Crear la notificación y asociar el intent
+        // Crear el PendingIntent
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE);
 
         // Crea una instancia de RemoteViews utilizando el archivo notification.xml
@@ -75,6 +76,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                 .setContentIntent(pendingIntent);
         NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         notificationManager.notify(0, notificationBuilder.build());
+
     }
 
     @Override

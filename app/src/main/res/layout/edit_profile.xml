@@ -58,33 +58,37 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/profileImageLayout" />
 
-    <EditText
-        android:id="@+id/emailEditText"
+    <Button
+        android:id="@+id/ajustesButton"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:hint="name@gmail.com"
-        android:inputType="textEmailAddress"
+        android:text="Ajustes de perfil"
         app:layout_constraintTop_toBottomOf="@id/nicknameEditText"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginStart="32dp"
         android:layout_marginEnd="32dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginBottom="16dp"/>
+        android:layout_marginTop="20dp"
+        android:layout_marginBottom="32dp"/>
+
 
     <Button
         android:id="@+id/saveButton"
-        android:layout_width="0dp"
+        android:layout_width="140dp"
         android:layout_height="wrap_content"
-        android:text="Guardar"
-        app:layout_constraintTop_toBottomOf="@id/emailEditText"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginStart="32dp"
         android:layout_marginEnd="32dp"
-        android:layout_marginTop="32dp"
-        android:layout_marginBottom="32dp"/>
+        android:text="Guardar"
+        app:layout_constraintEnd_toEndOf="parent"
+        tools:layout_editor_absoluteY="340dp" />
 
+    <Button
+        android:id="@+id/cancelButton"
+        android:layout_width="140dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="32dp"
+        android:text="Cancelar"
+        app:layout_constraintStart_toStartOf="parent"
+        tools:layout_editor_absoluteY="340dp" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

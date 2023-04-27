@@ -24,7 +24,7 @@ public class ProfileActivity extends AppCompatActivity {
         uid = getIntent().getStringExtra("user_id");
 
         navBar = findViewById(R.id.navbar);
-        navBar.setSelectedItemId(R.id.friendlist);
+        navBar.setSelectedItemId(R.id.profile);
         NavigationBarListener navigationBarListener = new NavigationBarListener(this, uid);
         navBar.setOnNavigationItemSelectedListener(navigationBarListener);
 

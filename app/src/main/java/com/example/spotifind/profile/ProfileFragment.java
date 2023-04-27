@@ -1,6 +1,7 @@
 package com.example.spotifind.profile;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 
@@ -124,14 +125,15 @@ public class ProfileFragment extends Fragment {
                 // REDIRIGIR A SPOTIFY
             }
         });
+
         if (isPrivateProfile) {
-            editButton.setVisibility(View.VISIBLE);editButton.setOnClickListener(new View.OnClickListener() {
+            editButton.setVisibility(View.VISIBLE);
+            editButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     // Abre la actividad para editar perfil
-                    // Cuando la actividad SettingsActivity esté lista, descomenta el siguiente código:
-                    // Intent intent = new Intent(getActivity(), SettingsActivity.class);
-                    // startActivity(intent);
+                    Intent intent = new Intent(getActivity(), com.example.spotifind.settings.SettingsActivity.class);
+                    startActivity(intent);
                 }
             });
         } else {

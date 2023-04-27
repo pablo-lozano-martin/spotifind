@@ -1,4 +1,4 @@
-package com.example.spotifind;
+package com.example.spotifind.profile;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -7,6 +7,8 @@ import android.widget.EditText;
 import android.widget.ImageView;
 
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.example.spotifind.R;
 
 public class EditProfileActivity extends AppCompatActivity {
     private ImageView profileImage;

@@ -17,11 +17,14 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.example.spotifind.Autentication.LoginActivity;
 import com.example.spotifind.CardAdapter;
 import com.example.spotifind.LocalUser;
+import com.example.spotifind.MainActivity;
 import com.example.spotifind.R;
 import com.example.spotifind.Spotify.CustomArtist;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.firebase.auth.FirebaseAuth;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -88,8 +91,22 @@ public class ProfileFragment extends Fragment {
         spotifyButton = view.findViewById(R.id.buttonSpotify);
         recyclerView = view.findViewById(R.id.recyclerViewTop5Artists);
         Button buttonTopSongs = view.findViewById(R.id.buttonTopSongs);
+        Button buttonLogout = view.findViewById(R.id.buttonLogOut);
         Button buttonTopArtists = view.findViewById(R.id.buttonTopArtists);
 
+        /*
+        // Obtener la instancia de FirebaseAuth
+        FirebaseAuth mAuth = FirebaseAuth.getInstance();
+
+        // Agregar el evento de clic al botón
+        buttonLogout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(MainActivity.this, LoginActivity.class);
+                startActivity(intent);
+                finish();
+            }
+        });*/
 
         // Lista de artistas para el carrusel, reemplazar con datos reales
         List<CustomArtist> artistList = new ArrayList<>();
@@ -146,4 +163,6 @@ public class ProfileFragment extends Fragment {
         SharedPreferences sharedPreferences = context.getSharedPreferences("preferencias", Context.MODE_PRIVATE);
         return sharedPreferences.getString("access_token", null);
     }
+
+
 }

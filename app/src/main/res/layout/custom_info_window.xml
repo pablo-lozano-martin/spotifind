@@ -8,16 +8,16 @@
     app:cardElevation="4dp">
 
     <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_width="236dp"
+        android:layout_height="match_parent"
+        android:gravity="center"
         android:orientation="vertical"
-        android:padding="8dp"
-        android:gravity="center">
+        android:padding="8dp">
 
         <ImageButton
             android:id="@+id/close_button"
-            android:layout_width="64dp"
-            android:layout_height="49dp"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
             android:layout_gravity="top|end"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/close_button_description"
@@ -25,8 +25,8 @@
 
         <ImageView
             android:id="@+id/song_image"
-            android:layout_width="match_parent"
-            android:layout_height="136dp"
+            android:layout_width="220dp"
+            android:layout_height="220dp"
             android:scaleType="centerCrop" />
 
         <TextView

@@ -65,13 +65,12 @@ public class ProfileFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_profile, container, false);
+        View view = inflater.inflate(R.layout.publicprofile, container, false);
         if(isPrivateProfile)
             user = new LocalUser(getContext());
         else{
             user= new LocalUser(getContext(),uid);
         }
-
         setInterface(view, user);
         return view;
     }
@@ -83,9 +82,6 @@ public class ProfileFragment extends Fragment {
         editButton = view.findViewById(R.id.buttonEdit);
         spotifyButton = view.findViewById(R.id.buttonSpotify);
         recyclerView = view.findViewById(R.id.recyclerViewTop5Artists);
-
-        navBar = view.findViewById(R.id.navbar);
-        navBar.setSelectedItemId(R.id.friendlist);
 
 
         // Lista de artistas para el carrusel, reemplazar con datos reales

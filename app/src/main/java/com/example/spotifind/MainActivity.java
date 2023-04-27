@@ -88,7 +88,6 @@ public class MainActivity extends AppCompatActivity {
             // Consultar la última canción reproducida en Firebase
             mSpotifyAppRemote = spotifyAppRemote;
             DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference("users").child(obtenerUserId());
-
             // Suscribirse a los cambios en el estado del reproductor de Spotify
             mSpotifyAppRemote.getPlayerApi().subscribeToPlayerState().setEventCallback(playerState -> {
                 final Track track = playerState.track;
@@ -106,10 +105,8 @@ public class MainActivity extends AppCompatActivity {
                                 mSpotifyAppRemote.getPlayerApi().play("spotify:track:6rqhFgbbKwnb9MLmUQDhG6");
                                 Log.d("LocalUser", "Reproduciendo una canción predeterminada en Spotify");
                                 mSpotifyAppRemote.getPlayerApi().subscribeToPlayerState().setEventCallback(playerState -> {
-                                    if (playerState.track != null) {
-                                        databaseRef.child("lastPlayedSong").setValue(playerState.track);
-                                        Log.d("LocalUser", "Guardando la canción predeterminada en Firebase");
-                                    }
+                                    databaseRef.child("lastPlayedSong").setValue(playerState.track);
+                                    Log.d("LocalUser", "Guardando la canción predeterminada en Firebase");
                                 });
                             }
                         }
@@ -121,24 +118,16 @@ public class MainActivity extends AppCompatActivity {
                     });
                 }
             });
-
-            // Reproducir una canción predeterminada en Spotify si el estado del reproductor está vacío
-            mSpotifyAppRemote.getPlayerApi().getPlayerState().setResultCallback(playerState -> {
-                if (playerState.track == null) {
-                    mSpotifyAppRemote.getPlayerApi().play("spotify:track:6rqhFgbbKwnb9MLmUQDhG6");
-                }
-            });
         }
+
         @Override
         public void onFailure(Throwable error) {
             if (error instanceof NotLoggedInException || error instanceof UserNotAuthorizedException) {
-
-            } else if (error instanceof CouldNotFindSpotifyApp) {
-                //
+                Log.e("LocalUser", "Error al leer el valor de Firebase.", error);
             }
+
         }
     };
-
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mContext = this;

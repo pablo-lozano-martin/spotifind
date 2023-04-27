@@ -125,18 +125,7 @@ public class LocalUser {
 
         this.uid = getDataFromCache(context, "user_id");
         initializeMyDataFromCache();
-
-        String topArtistsJson = getDataFromCache(context, "TOP_ARTISTS");
-        String topTracksJson = getDataFromCache(context, "TOP_TRACKS");
-
-        if (topArtistsJson != null && topTracksJson != null) {
-            Type artistListType = new TypeToken<List<CustomArtist>>(){}.getType();
-            top5Artists = new Gson().fromJson(topArtistsJson, artistListType);
-            Type trackListType = new TypeToken<List<CustomTrack>>(){}.getType();
-            top5Songs = new Gson().fromJson(topTracksJson, trackListType);
-        } else {
-            getSpotifyStats();
-        }
+        initializeTopArtistsAndSongs();
     }
 
     public LocalUser(Context context, String uid) {
@@ -156,17 +145,7 @@ public class LocalUser {
             initializeMyDataFromCache();
         }
 
-        String topArtistsJson = getDataFromCache(context, "TOP_ARTISTS");
-        String topTracksJson = getDataFromCache(context, "TOP_TRACKS");
-
-        if (topArtistsJson != null && topTracksJson != null) {
-            Type artistListType = new TypeToken<List<CustomArtist>>(){}.getType();
-            top5Artists = new Gson().fromJson(topArtistsJson, artistListType);
-            Type trackListType = new TypeToken<List<CustomTrack>>(){}.getType();
-            top5Songs = new Gson().fromJson(topTracksJson, trackListType);
-        } else {
-            getSpotifyStats();
-        }
+        initializeTopArtistsAndSongs();
     }
 
 
@@ -425,6 +404,20 @@ public class LocalUser {
     ////////////////////////////
     //////////Spotify Statistics
     ////////////////////////////
+
+    private void initializeTopArtistsAndSongs() {
+        String topArtistsJson = getDataFromCache(context, "TOP_ARTISTS");
+        String topTracksJson = getDataFromCache(context, "TOP_TRACKS");
+
+        if (topArtistsJson != null && topTracksJson != null) {
+            Type artistListType = new TypeToken<List<CustomArtist>>(){}.getType();
+            top5Artists = new Gson().fromJson(topArtistsJson, artistListType);
+            Type trackListType = new TypeToken<List<CustomTrack>>(){}.getType();
+            top5Songs = new Gson().fromJson(topTracksJson, trackListType);
+        } else {
+            getSpotifyStats();
+        }
+    }
 
     private void getSpotifyStats(){
         SpotifyService artistSpotifyService = new SpotifyService(

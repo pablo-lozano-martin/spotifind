@@ -11,34 +11,15 @@
         android:layout_height="wrap_content"
         tools:layout_editor_absoluteX="1dp">
 
-        <Button
-            android:id="@+id/buttonSpotify"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="132dp"
-            android:layout_marginTop="250dp"
-            android:layout_marginEnd="132dp"
-            android:layout_marginBottom="6dp"
-            android:background="#3366CC"
-            android:text="ABRIR EN SPOTIFY"
-            app:layout_constraintBottom_toBottomOf="parent"
+        <ImageView
+            android:id="@+id/imageView"
+            android:layout_width="140dp"
+            android:layout_height="140dp"
+            android:layout_marginTop="40dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintVertical_bias="0.018" />
-
-        <ImageButton
-            android:id="@+id/buttonEdit"
-            android:layout_width="50dp"
-            android:layout_height="55dp"
-            android:layout_marginTop="16dp"
-            android:layout_marginEnd="16dp"
-            android:backgroundTint="@color/dark_blue"
-            android:contentDescription="@string/edit_button_description"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/edit_icon"
-            app:tint="@color/white" />
+            tools:srcCompat="@tools:sample/avatars" />
 
         <TextView
             android:id="@+id/textNickname"
@@ -56,6 +37,35 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintVertical_bias="0.0" />
+
+        <ImageButton
+            android:id="@+id/buttonEdit"
+            android:layout_width="50dp"
+            android:layout_height="55dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginEnd="16dp"
+            android:backgroundTint="@color/dark_blue"
+            android:contentDescription="@string/edit_button_description"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@drawable/edit_icon"
+            app:tint="@color/white" />
+
+        <Button
+            android:id="@+id/buttonSpotify"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="132dp"
+            android:layout_marginTop="250dp"
+            android:layout_marginEnd="132dp"
+            android:layout_marginBottom="6dp"
+            android:background="#3366CC"
+            android:text="ABRIR EN SPOTIFY"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.018" />
 
         <TextView
             android:id="@+id/textTop5Artists"
@@ -86,48 +96,6 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/textTop5Artists" />
 
-        <ImageView
-            android:id="@+id/imageView"
-            android:layout_width="140dp"
-            android:layout_height="140dp"
-            android:layout_marginTop="40dp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            tools:srcCompat="@tools:sample/avatars" />
-
-
-        <!--<androidx.cardview.widget.CardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            tools:layout_editor_absoluteX="1dp"
-            tools:layout_editor_absoluteY="401dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="93dp"
-                android:orientation="horizontal"
-                android:padding="16dp">
-
-                <ImageView
-                    android:id="@+id/artistImage"
-                    android:layout_width="64dp"
-                    android:layout_height="64dp"
-                    android:scaleType="centerCrop" />
-
-                <TextView
-                    android:id="@+id/artistName"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:gravity="center_vertical"
-                    android:text="Artista 1"
-                    android:textSize="18dp" />
-            </LinearLayout>
-
-        </androidx.cardview.widget.CardView>-->
         <FrameLayout
             android:id="@+id/fragment_container"
             android:layout_width="0dp"
@@ -137,7 +105,6 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
-
         <com.google.android.material.bottomnavigation.BottomNavigationView
             android:id="@+id/navbar"
             android:layout_width="match_parent"
@@ -146,5 +113,6 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:menu="@menu/navigation_menu"/>
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 </ScrollView>

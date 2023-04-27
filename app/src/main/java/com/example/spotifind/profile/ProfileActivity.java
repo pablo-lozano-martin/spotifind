@@ -9,8 +9,6 @@ import androidx.fragment.app.FragmentTransaction;
 
 import com.example.spotifind.NavigationBarListener;
 import com.example.spotifind.R;
-import com.example.spotifind.profile.fragments.InternalProfileFragment;
-import com.example.spotifind.profile.fragments.PublicProfileFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 public class ProfileActivity extends AppCompatActivity {
@@ -38,12 +36,9 @@ public class ProfileActivity extends AppCompatActivity {
         SharedPreferences sharedPreferences = getSharedPreferences("preferencias", MODE_PRIVATE);
         String currentUserUid = sharedPreferences.getString("current_user_uid", "");
 
-        if (currentUserUid.equals(uid)) {
-            fragmentTransaction.add(R.id.fragment_container, new InternalProfileFragment());
-        } else {
-            fragmentTransaction.add(R.id.fragment_container, new PublicProfileFragment(uid));
-        }
-
+        // Utiliza ProfileFragment en lugar de InternalProfileFragment y PublicProfileFragment
+        boolean isPrivateProfile = currentUserUid.equals(uid);
+        fragmentTransaction.add(R.id.fragment_container, ProfileFragment.newInstance(isPrivateProfile, uid));
         fragmentTransaction.commit();
     }
 }

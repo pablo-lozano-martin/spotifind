@@ -6,11 +6,8 @@ import android.util.Log;
 import com.example.spotifind.MainActivity;
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
-import com.spotify.protocol.types.Artist;
-import com.spotify.protocol.types.Track;
 
 import java.io.IOException;
-import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,7 +15,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
-public class SpotifyService extends AsyncTask<Void, Void, List<CustomTrack>> {
+public class SpotifyService extends AsyncTask<Void, Void, Object> {
 
     private static final String BASE_URL = "https://api.spotify.com/v1/";
 
@@ -29,27 +26,28 @@ public class SpotifyService extends AsyncTask<Void, Void, List<CustomTrack>> {
     private final String token;
 
     private Gson gson;
+
     public interface SpotifyCallback<T> {
         void onSuccess(T result);
+
         void onFailure(Throwable throwable);
     }
 
-    public SpotifyService(String accessToken, String queryType, SpotifyCallback<List<CustomTrack>> callback, SpotifyCallback<List<CustomArtist>> artistCallback) {
-        this.token=accessToken;
+    public SpotifyService(String token, String queryType, SpotifyCallback<List<CustomTrack>> callback, SpotifyCallback<List<CustomArtist>> artistCallback) {
+        this.token = token;
         this.queryType = queryType;
         this.callback = callback;
         this.artistCallback = artistCallback;
         gson = new Gson();
     }
 
-
     @Override
-    protected List<CustomTrack> doInBackground(Void... voids) {
+    protected Object doInBackground(Void... voids) {
         OkHttpClient client = new OkHttpClient();
 
         Request request = new Request.Builder()
                 .url(BASE_URL + "me/top/" + queryType + "?limit=5")
-                .addHeader("Authorization", "Bearer " + MainActivity.getToken())
+                .addHeader("Authorization", "Bearer " + token)
                 .addHeader("Accept", "application/json")
                 .addHeader("Content-Type", "application/json")
                 .build();
@@ -58,12 +56,15 @@ public class SpotifyService extends AsyncTask<Void, Void, List<CustomTrack>> {
 
             Response response = client.newCall(request).execute();
             if (response.isSuccessful()) {
-                List<CustomTrack> customTracks = new ArrayList<>();
                 String responseString = response.body().string();
                 Gson gson = new Gson();
+
                 if (queryType.equals("tracks")) {
                     TrackResponse trackResponse = gson.fromJson(responseString, TrackResponse.class);
+                    List<CustomTrack> customTracks = new ArrayList<>();
+
                     for (Track track : trackResponse.getItems()) {
+                        String trackId = track.id;
                         String trackName = track.name;
                         String trackUri = track.uri;
                         String artistNames = "";
@@ -74,51 +75,57 @@ public class SpotifyService extends AsyncTask<Void, Void, List<CustomTrack>> {
                                 artistNames += ", ";
                             }
                         }
-                        CustomTrack customTrack = new CustomTrack(trackUri, trackName, artistNames);
+                        String imageUrl = track.album.images.get(0).url;
+                        CustomTrack customTrack = new CustomTrack(trackId, trackName, artistNames, imageUrl);
                         customTracks.add(customTrack);
                     }
+                    return customTracks;
                 } else if (queryType.equals("artists")) {
                     ArtistResponse artistResponse = gson.fromJson(responseString, ArtistResponse.class);
-                    AbstractList<CustomArtist> customArtists = new ArrayList<>();
+                    List<CustomArtist> customArtists = new ArrayList<>();
+
                     for (Artist artist : artistResponse.getItems()) {
+                        String artistId = artist.id;
                         String artistName = artist.name;
                         String artistUri = artist.uri;
-                        CustomArtist customArtist = new CustomArtist(artistUri, artistName);
+                        String imageUrl = artist.images.get(0).url;
+                        CustomArtist customArtist = new CustomArtist(artistId, artistName, imageUrl);
+                        customArtist.setUri(artistUri);
                         customArtists.add(customArtist);
                     }
-                    artistCallback.onSuccess(customArtists);
+                    return customArtists;
                 }
-                return customTracks;
             } else {
-                throw new IOException("Unexpected HTTP response: " + response);
+                throw new IOException(" Unexpected HTTP response: " + response);
             }
         } catch (IOException e) {
             e.printStackTrace();
             return null;
         }
+        return null;
     }
 
     @Override
-    protected void onPostExecute(List<CustomTrack> customTracks) {
-        if (customTracks != null) {
-            if (callback != null) {
-                callback.onSuccess(customTracks);
+    protected void onPostExecute(Object result) {
+        if (result != null) {
+            if (queryType.equals("tracks") && callback != null) {
+                callback.onSuccess((List<CustomTrack>) result);
+            } else if (queryType.equals("artists") && artistCallback != null) {
+                artistCallback.onSuccess((List<CustomArtist>) result);
             }
         } else {
-            if (artistCallback != null) {
+            if (queryType.equals("tracks") && callback != null) {
+                callback.onFailure(new Exception("Error al obtener los Top " + queryType));
+            } else if (queryType.equals("artists") && artistCallback != null) {
                 artistCallback.onFailure(new Exception("Error al obtener los Top " + queryType));
             }
-            Log.d("SpotifyService", "Requesting Top " + MainActivity.getToken());
+            Log.d("SpotifyService", "Requesting Top " + token);
         }
     }
 
     public static class TrackResponse {
         @SerializedName("items")
         private List<Track> items;
-
-        private TrackResponse(List<Track> items) {
-            this.items = items;
-        }
 
         public List<Track> getItems() {
             return items;
@@ -129,12 +136,31 @@ public class SpotifyService extends AsyncTask<Void, Void, List<CustomTrack>> {
         @SerializedName("items")
         private List<Artist> items;
 
-        private ArtistResponse(List<Artist> items) {
-            this.items = items;
-        }
-
         public List<Artist> getItems() {
             return items;
         }
+    }
+
+    public static class Track {
+        String id;
+        String name;
+        String uri;
+        Album album;
+        List<Artist> artists;
+    }
+
+    public static class Artist {
+        String id;
+        String name;
+        String uri;
+        List<Image> images;
+    }
+
+    public static class Album {
+        List<Image> images;
+    }
+
+    public static class Image {
+        String url;
     }
 }

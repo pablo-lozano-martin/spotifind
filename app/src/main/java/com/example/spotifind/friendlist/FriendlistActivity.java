@@ -5,6 +5,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 
@@ -24,10 +25,13 @@ public class FriendlistActivity extends AppCompatActivity implements FriendlistA
     private ArrayList<LocalUser> friendlist;
 
     private String userId;
+
+    private String token;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_friendlist);
+        token = getTokenFromCache(getApplicationContext());
         userId = getIntent().getStringExtra("user_id");
         setfriendlist();
         setInterface();
@@ -35,7 +39,7 @@ public class FriendlistActivity extends AppCompatActivity implements FriendlistA
 
     private void setfriendlist(){
         //TODO set the friendlist
-        LocalUser user = new LocalUser(this);
+        LocalUser user = new LocalUser(this,token);
         this.friendlist = new ArrayList<LocalUser>();
     }
 
@@ -58,4 +62,10 @@ public class FriendlistActivity extends AppCompatActivity implements FriendlistA
         friendlist.get(position);//TODO .viewProfile O ir a la actividad profile con los datos de este user
         Log.d("FrienlistActivity", "Se vería el perfil de " + friendlist.get(position).getUsername());
     }
+
+    private String getTokenFromCache(Context context) {
+        SharedPreferences sharedPreferences = context.getSharedPreferences("preferencias", Context.MODE_PRIVATE);
+        return sharedPreferences.getString("access_token", null);
+    }
+
 }

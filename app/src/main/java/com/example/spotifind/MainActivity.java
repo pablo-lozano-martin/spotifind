@@ -90,8 +90,8 @@ public class MainActivity extends AppCompatActivity {
             DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference("users").child(obtenerUserId());
             // Suscribirse a los cambios en el estado del reproductor de Spotify
             mSpotifyAppRemote.getPlayerApi().subscribeToPlayerState().setEventCallback(playerState -> {
-                final Track track = playerState.track;
-                if (track != null) {
+                if (playerState != null && playerState.track != null) {
+                    final Track track = playerState.track;
                     // Actualizar la última canción reproducida en Firebase
                     databaseRef.child("lastPlayedSong").setValue(track);
                     Log.d("LocalUser", "Última canción reproducida actualizada en Firebase");
@@ -105,8 +105,10 @@ public class MainActivity extends AppCompatActivity {
                                 mSpotifyAppRemote.getPlayerApi().play("spotify:track:6rqhFgbbKwnb9MLmUQDhG6");
                                 Log.d("LocalUser", "Reproduciendo una canción predeterminada en Spotify");
                                 mSpotifyAppRemote.getPlayerApi().subscribeToPlayerState().setEventCallback(playerState -> {
-                                    databaseRef.child("lastPlayedSong").setValue(playerState.track);
-                                    Log.d("LocalUser", "Guardando la canción predeterminada en Firebase");
+                                    if (playerState != null && playerState.track != null) {
+                                        databaseRef.child("lastPlayedSong").setValue(playerState.track);
+                                        Log.d("LocalUser", "Guardando la canción predeterminada en Firebase");
+                                    }
                                 });
                             }
                         }
@@ -241,7 +243,7 @@ public class MainActivity extends AppCompatActivity {
     // Inicializa los datos del usuario local
     private void initializeLocalUser() {
         SpotifyAppRemote.connect(this, parametrosConexion, mConnectionListener);
-        mLocalUser = new LocalUser(this);
+        mLocalUser = new LocalUser(this,obtenerAccessToken());
     }
 
     // Guarda el token de acceso en las preferencias compartidas

@@ -18,6 +18,8 @@ import com.firebase.geofire.GeoFire;
 import com.firebase.geofire.GeoLocation;
 import com.firebase.geofire.GeoQuery;
 import com.firebase.geofire.GeoQueryEventListener;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.common.reflect.TypeToken;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -33,11 +35,21 @@ import com.spotify.protocol.client.Subscription;
 import com.spotify.protocol.types.PlayerState;
 import com.spotify.protocol.types.Track;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
-public class LocalUser {
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+
+public class LocalUser<SpotifyApi> {
 
     private static final String SPOTIFY_AUTH_TOKEN_KEY = null;
 
@@ -50,6 +62,8 @@ public class LocalUser {
     private List<CustomArtist> top5Artists;
     private Track lastPlayedSong;
     private List<CustomTrack> top5Songs;
+
+    private String spotifyUri;
 
     public Context getContext() {
         return context;
@@ -86,6 +100,10 @@ public class LocalUser {
             setFcmToken(dataSnapshot.child("fcmToken").getValue(String.class));
         }
 
+        if (dataSnapshot.hasChild("spotifyUri")) {
+            setFcmToken(dataSnapshot.child("spotifyUri").getValue(String.class));
+        }
+
         if (dataSnapshot.hasChild("top5Artists")) {
             top5Artists = new ArrayList<>();
             for (DataSnapshot artistSnapshot : dataSnapshot.child("top5Artists").getChildren()) {
@@ -110,33 +128,28 @@ public class LocalUser {
                 }
         }
 
+
         getSpotifyStats();
     }
 
 
-    public LocalUser(Context context) {
+    public LocalUser(Context context, String spotitoken) {
         this.context = context;
         context.getSharedPreferences("preferencias", Context.MODE_PRIVATE);
-        this.spotitoken = getSpotifyAuthToken(context);
-
-        if (spotitoken == null) {
-            MainActivity.getToken();
-        }
-
+        this.spotitoken=spotitoken;
         this.uid = getDataFromCache(context, "user_id");
+        if(spotitoken!=null)
+            saveSpotifyAccountUriToFirebase(spotitoken);
         initializeMyDataFromCache();
         initializeTopArtistsAndSongs();
     }
 
-    public LocalUser(Context context, String uid) {
+    public LocalUser(Context context, String uid,String spotitoken) {
         this.context = context;
         context.getSharedPreferences("preferencias", Context.MODE_PRIVATE);
-        this.spotitoken = getSpotifyAuthToken(context);
-
-        if (spotitoken == null) {
-            MainActivity.getToken();
-        }
-
+        this.spotitoken = spotitoken;
+        if(spotitoken!=null)
+            saveSpotifyAccountUriToFirebase(spotitoken);
         if (uid != null) {
             this.uid = uid;
             initializeOtherFromCache();
@@ -148,66 +161,36 @@ public class LocalUser {
         initializeTopArtistsAndSongs();
     }
 
-
-    private void updateTop5Artists(List<CustomArtist> artists) {
-        List<CustomArtist> artistPairs = new ArrayList<>();
-        List<String> artistIds = new ArrayList<>();
-        for (CustomArtist artist : artists) {
-            artistPairs.add(new CustomArtist(artist.getId(), artist.getName()));
-            artistIds.add(artist.getId());
-        }
-
-        SpotifyUriService artistImageUriService = new SpotifyUriService(new SpotifyService.SpotifyCallback<List<String>>() {
-            @Override
-            public void onSuccess(List<String> result) {
-                for (int i = 0; i < result.size() && i < artistPairs.size(); i++) {
-                    artistPairs.get(i).setImageUrl(result.get(i));
-                }
-                setTop5Artists(artistPairs);
-                Log.d("LocalUser", "Top 5 artists updated: " + artistPairs.get(0).getName());
-                String jsonData = new Gson().toJson(artistPairs);
-                saveDataToCache(context, "TOP_ARTISTS", jsonData);
-            }
-
-            @Override
-            public void onFailure(Throwable throwable) {
-                Log.e("LocalUser", "Error al obtener las URIs de las imágenes de los artistas", throwable);
-            }
-        });
-        artistImageUriService.execute(new Pair<>("artists", artistIds));
-    }
-
     public void setUid(String uid){
         this.uid=uid;
     }
 
+    private void updateTop5Artists(List<CustomArtist> artists) {
+        List<CustomArtist> artistPairs = new ArrayList<>();
+
+        for (CustomArtist artist : artists) {
+            artistPairs.add(new CustomArtist(artist.getId(), artist.getName(), artist.getImageUrl()));
+        }
+
+        setTop5Artists(artistPairs);
+        Log.d("LocalUser", "Top 5 artists updated: " + artistPairs.get(0).getName());
+        String jsonData = new Gson().toJson(artistPairs);
+        saveDataToCache(context, "TOP_ARTISTS", jsonData);
+    }
 
     private void updateTop5Tracks(List<CustomTrack> tracks) {
         List<CustomTrack> trackPairs = new ArrayList<>();
-        List<String> trackIds = new ArrayList<>();
-        for (CustomTrack track : tracks) {
-            trackPairs.add(new CustomTrack(track.getId(), track.getName(), track.getUri()));
-            trackIds.add(track.getId());
-        }
-        SpotifyUriService albumImageUriService = new SpotifyUriService(new SpotifyService.SpotifyCallback<List<String>>() {
-            @Override
-            public void onSuccess(List<String> result) {
-                for (int i = 0; i < result.size() && i < trackPairs.size(); i++) {
-                    trackPairs.get(i).setAlbumImageUrl(result.get(i));
-                }
-                setTop5Songs(trackPairs);
-                Log.d("LocalUser", "Top 5 tracks updated: " + trackPairs.get(0).getName());
-                String jsonData = new Gson().toJson(trackPairs);
-                saveDataToCache(context, "TOP_TRACKS", jsonData);
-            }
 
-            @Override
-            public void onFailure(Throwable throwable) {
-                Log.e("LocalUser", "Error al obtener las URIs de las imágenes de los álbumes", throwable);
-            }
-        });
-        albumImageUriService.execute(new Pair<>("tracks", trackIds));
+        for (CustomTrack track : tracks) {
+            trackPairs.add(new CustomTrack(track.getId(), track.getName(), track.getUri(), track.getImageUrl()));
+        }
+
+        setTop5Songs(trackPairs);
+        Log.d("LocalUser", "Top 5 tracks updated: " + trackPairs.get(0).getName());
+        String jsonData = new Gson().toJson(trackPairs);
+        saveDataToCache(context, "TOP_TRACKS", jsonData);
     }
+
     public String getUid() {
         return uid;
     }
@@ -269,6 +252,16 @@ public class LocalUser {
         saveDataToCache(this.context, "fcmToken", jsonData);
     }
 
+    public String spotifyUri() {
+        return spotifyUri;
+    }
+
+    public void setSpotifyUri(String spotifyUri) {
+        this.spotifyUri = spotifyUri;
+        String jsonData = new Gson().toJson(spotifyUri);
+        saveDataToCache(this.context, "spotifyUri", jsonData);
+    }
+
     public void setFriendList(List<LocalUser> friendList) {
         this.friendList = friendList;
         String jsonData = new Gson().toJson(friendList);
@@ -291,6 +284,7 @@ public class LocalUser {
         String email = getDataFromCache(context, "email");
         String fcmToken = getDataFromCache(context, "fcmToken");
         String friendListJson = getDataFromCache(context, "friendList");
+        String spotifyUri = getDataFromCache(context,"spotifyUri");
 
         if (username != null) {
             this.username = new Gson().fromJson(username, String.class);
@@ -312,7 +306,11 @@ public class LocalUser {
             this.friendList = cachedFriendList;
         }
 
-        if (username == null || fcmToken == null || uid == null) {
+        if(spotifyUri!=null){
+            this.spotifyUri = spotifyUri;
+        }
+
+        if (username == null || fcmToken == null || uid == null || spotifyUri==null) {
             getDataFromFirebase();
         }
     }
@@ -367,6 +365,10 @@ public class LocalUser {
 
                     if (fcmToken == null && localUser.getFcmToken() != null) {
                         setFcmToken(localUser.getFcmToken());
+                    }
+
+                    if(spotifyUri == null && localUser.spotifyUri() != null){
+                        setSpotifyUri(localUser.spotifyUri());
                     }
 
                     List<LocalUser> cachedFriendList = getFriendListFromCache(context);
@@ -505,4 +507,56 @@ public class LocalUser {
             Log.w("LocalUser", "Cannot update Top5Artists in Firebase, top5Artists is null");
         }
     }
+
+    private void saveAccountUriToFirebase(String userId) {
+        // Obtener una referencia a la base de datos de Firebase
+        DatabaseReference database = FirebaseDatabase.getInstance().getReference();
+
+        // Guardar el URI de la cuenta de Spotify en Firebase (puedes cambiar la estructura según tus necesidades)
+        DatabaseReference userRef = database.child("users").child(userId).child("account_uri");
+        String accountUri = "https://open.spotify.com/user/" + userId;
+        userRef.setValue(accountUri).addOnCompleteListener(new OnCompleteListener<Void>() {
+            @Override
+            public void onComplete(@NonNull Task<Void> task) {
+                if (task.isSuccessful()) {
+                    Log.d("LocalUser", "Spotify account URI saved in Firebase");
+                    setSpotifyUri(accountUri);
+                } else {
+                    Log.e("LocalUser", "Error saving Spotify account URI to Firebase", task.getException());
+                }
+            }
+        });
+    }
+
+    private void saveSpotifyAccountUriToFirebase(String accessToken) {
+        OkHttpClient client = new OkHttpClient();
+        Request request = new Request.Builder()
+                .url("https://api.spotify.com/v1/me")
+                .header("Authorization", "Bearer " + accessToken)
+                .build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                Log.e("LocalUser", "Error getting spotify account uri", e);
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                if (response.isSuccessful()) {
+                    try {
+                        JSONObject jsonObject = new JSONObject(response.body().string());
+                        String userId = jsonObject.getString("id");
+                        saveAccountUriToFirebase(userId);
+                    } catch (JSONException e) {
+                        // Manejar el error
+                    }
+                } else {
+                    // Manejar el error
+                }
+            }
+        });
+    }
+
+
 }

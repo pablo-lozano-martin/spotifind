@@ -11,9 +11,10 @@ public class CustomArtist{
 
     public CustomArtist() {
     }
-    public CustomArtist(String id, String name) {
+    public CustomArtist(String id, String name,String imageUrl) {
         this.id = id;
         this.name = name;
+        this.imageUrl=imageUrl;
     }
 
 

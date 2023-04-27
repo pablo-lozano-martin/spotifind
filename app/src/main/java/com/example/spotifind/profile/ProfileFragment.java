@@ -1,5 +1,7 @@
 package com.example.spotifind.profile;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
@@ -9,6 +11,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -66,10 +69,11 @@ public class ProfileFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.publicprofile, container, false);
+        String token = getTokenFromCache(getContext());
         if(isPrivateProfile)
-            user = new LocalUser(getContext());
+            user = new LocalUser(getContext(),token);
         else{
-            user= new LocalUser(getContext(),uid);
+            user= new LocalUser(getContext(),uid,token);
         }
         setInterface(view, user);
         return view;
@@ -82,6 +86,8 @@ public class ProfileFragment extends Fragment {
         editButton = view.findViewById(R.id.buttonEdit);
         spotifyButton = view.findViewById(R.id.buttonSpotify);
         recyclerView = view.findViewById(R.id.recyclerViewTop5Artists);
+        Button buttonTopSongs = view.findViewById(R.id.buttonTopSongs);
+        Button buttonTopArtists = view.findViewById(R.id.buttonTopArtists);
 
 
         // Lista de artistas para el carrusel, reemplazar con datos reales
@@ -94,10 +100,22 @@ public class ProfileFragment extends Fragment {
 
         CardAdapter artistCardAdapter = new CardAdapter(user.getTop5Artists(), null, getActivity());
         CardAdapter songsCardAdapter = new CardAdapter(null, user.getTop5Songs(), getActivity());
-        recyclerView.setAdapter(songsCardAdapter);
+        recyclerView.setAdapter(songsCardAdapter); // Por defecto, muestra las canciones
 
-        // Listener botón editar el perfil
-        editButton.setVisibility(View.GONE);
+        buttonTopSongs.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                recyclerView.setAdapter(songsCardAdapter);
+            }
+        });
+
+        buttonTopArtists.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                recyclerView.setAdapter(artistCardAdapter);
+            }
+        });
+
 
         // Listener botón Spotify
         spotifyButton.setOnClickListener(new View.OnClickListener() {
@@ -120,5 +138,10 @@ public class ProfileFragment extends Fragment {
             editButton.setVisibility(View.GONE);
         }
 
+    }
+
+    private String getTokenFromCache(Context context) {
+        SharedPreferences sharedPreferences = context.getSharedPreferences("preferencias", Context.MODE_PRIVATE);
+        return sharedPreferences.getString("access_token", null);
     }
 }

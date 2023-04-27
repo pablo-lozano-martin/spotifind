@@ -4,17 +4,28 @@ public class CustomTrack {
     private String id;
     private String name;
     private String uri;
-
     private String imageUrl;
+
+    public String getArtist() {
+        return artist;
+    }
+
+    public void setArtist(String artist) {
+        this.artist = artist;
+    }
+
+    private String artist;
 
 
     public CustomTrack(){
 
     }
-    public CustomTrack(String id, String name, String uri) {
+    public CustomTrack(String id, String name, String artist,String imageUrl) {
         this.id = id;
         this.name = name;
-        this.uri = uri;
+        this.artist = artist;
+        this.imageUrl=imageUrl;
+
     }
 
     public String getId() {

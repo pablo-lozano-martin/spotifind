@@ -4,15 +4,19 @@
     <color name="purple_700">#FF3700B3</color>
     <color name="teal_200">#FF03DAC5</color>
     <color name="teal_700">#FF018786</color>
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
 
 
     <!-- SPOTIFIND COLORES DE MARCA-->
-    <color name="dark_blue">#21618c</color>
-    <color name="light_gray">#d5dbdb</color>
-    <color name="yellow">#f7dc6f</color>
-    <color name="blue">#2e86c1</color>
+
+        <color name="black">#FF000000</color>
+        <color name="white">#FFFFFFFF</color>
+        <color name="dark_blue">#21618c</color>
+        <color name="light_gray">#d5dbdb</color>
+        <color name="yellow">#f7dc6f</color>
+        <color name="blue">#2e86c1</color>
+        <color name="background_color">#000000</color>
+
+
 
 
 </resources>

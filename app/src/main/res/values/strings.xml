@@ -8,5 +8,7 @@
     <string name="CHANNEL_ID">CHANNEL_ID</string>
     <string name="dit_button_description">Editar perfil</string>
     <string name="edit_button_description">Editar perfil</string>
+    <string name="top_artists">Top Artists</string>
+    <string name="top_songs">Top Songs</string>
 
 </resources>

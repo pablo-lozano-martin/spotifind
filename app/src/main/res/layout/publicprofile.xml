@@ -20,6 +20,27 @@
             app:layout_constraintTop_toTopOf="parent"
             tools:srcCompat="@tools:sample/avatars" />
 
+        <ImageButton
+            android:id="@+id/buttonSpotify"
+            android:layout_width="74dp"
+            android:layout_height="59dp"
+            android:layout_marginStart="132dp"
+            android:layout_marginTop="250dp"
+            android:layout_marginEnd="132dp"
+            android:layout_marginBottom="6dp"
+            android:background="@null"
+            android:contentDescription="Este boton abre spotify"
+            android:scaleX="0.7"
+            android:scaleY="0.7"
+            android:src="@drawable/spotify_logo_without_text"
+            android:text="ABRIR EN SPOTIFY"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="1.0"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.0" />
+
         <TextView
             android:id="@+id/textNickname"
             android:layout_width="195dp"
@@ -50,7 +71,19 @@
             app:srcCompat="@drawable/edit_icon"
             app:tint="@color/white" />
 
-        <Button
+        <ImageButton
+            android:id="@+id/buttonLogOut"
+            android:layout_width="50dp"
+            android:layout_height="55dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginEnd="344dp"
+            android:backgroundTint="@color/dark_blue"
+            android:contentDescription="@string/edit_button_description"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@drawable/logout_icon"
+            app:tint="@color/white" />
+            <Button
             android:id="@+id/buttonTopArtists"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -60,27 +93,46 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <Button
-            android:id="@+id/buttonTopSongs"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="28dp"
-            android:layout_marginTop="336dp"
-            android:text="@string/top_songs"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            <Button
+                android:id="@+id/buttonTopSongs"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="28dp"
+                android:layout_marginTop="336dp"
+                android:text="@string/top_songs"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recyclerViewTop5Artists"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="20dp"
-            android:layout_marginTop="12dp"
-            android:layout_marginEnd="20dp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.0"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/buttonTopSongs" />
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recyclerViewTop5Artists"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="20dp"
+                android:layout_marginTop="12dp"
+                android:layout_marginEnd="20dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.0"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/buttonTopSongs" />
+
+            <Button
+                android:id="@+id/rechazarButton"
+                android:layout_width="120dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="60dp"
+                android:layout_marginTop="20dp"
+                android:text="Rechazar"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/textNickname" />
+
+            <Button
+                android:id="@+id/aceptarButton"
+                android:layout_width="120dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:layout_marginEnd="60dp"
+                android:text="Aceptar"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/textNickname" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
-</ScrollView>

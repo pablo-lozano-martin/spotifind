@@ -1,4 +1,4 @@
-package com.example.spotifind.settings;
+package com.example.spotifind.profile;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;

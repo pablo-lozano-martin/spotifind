@@ -92,6 +92,7 @@ public class ProfileFragment extends Fragment {
         _isPrivateProfile=isPrivateProfile;
         textNickname = view.findViewById(R.id.textNickname);
         userImage = view.findViewById(R.id.imageView);
+        spotifyButton= view.findViewById(R.id.open_spotify_button);
         editButton = view.findViewById(R.id.buttonEdit);
         recyclerView = view.findViewById(R.id.recyclerViewTop5Artists);
         Button buttonTopSongs = view.findViewById(R.id.buttonTopSongs);
@@ -110,6 +111,14 @@ public class ProfileFragment extends Fragment {
         CardAdapter artistCardAdapter = new CardAdapter(user.getTop5Artists(), null, getActivity());
         CardAdapter songsCardAdapter = new CardAdapter(null, user.getTop5Songs(), getActivity());
         recyclerView.setAdapter(songsCardAdapter); // Por defecto, muestra las canciones
+
+        spotifyButton.setOnClickListener(v -> {
+            // Abrir el perfil de Spotify del usuario
+            String spotifyUri = user.spotifyUri();
+            Intent intent = new Intent(Intent.ACTION_VIEW);
+            intent.setData(Uri.parse("spotify:user:" + spotifyUri));
+            startActivity(intent);
+        });
 
         buttonTopSongs.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -132,7 +141,7 @@ public class ProfileFragment extends Fragment {
                 @Override
                 public void onClick(View v) {
                     // Abre la actividad para editar perfil
-                    Intent intent = new Intent(getActivity(), com.example.spotifind.settings.SettingsActivity.class);
+                    Intent intent = new Intent(getActivity(), SettingsActivity.class);
                     startActivity(intent);
                 }
             });
@@ -150,7 +159,7 @@ public class ProfileFragment extends Fragment {
         }).addOnFailureListener(new OnFailureListener() {
             @Override
             public void onFailure(@NonNull Exception exception) {
-                userImage.setImageResource(R.drawable.default_profile);
+                userImage.setImageResource(R.drawable.profile_icon);
             }
         });
     }

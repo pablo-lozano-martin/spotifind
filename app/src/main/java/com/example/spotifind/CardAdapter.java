@@ -62,7 +62,7 @@ import android.content.ActivityNotFoundException;
                 imageUrl = customTrack.getImageUrl();
             }
 
-            if (!imageUrl.isEmpty()) {
+            if (imageUrl!=null) {
                 Picasso.get().load(imageUrl).into(holder.imageView);
             }
 
@@ -73,6 +73,7 @@ import android.content.ActivityNotFoundException;
                 }
             });
         }
+
 
 
 

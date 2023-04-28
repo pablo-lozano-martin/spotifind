@@ -3,8 +3,10 @@ package com.example.spotifind.profile;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -21,7 +23,13 @@ import com.example.spotifind.CardAdapter;
 import com.example.spotifind.LocalUser;
 import com.example.spotifind.R;
 import com.example.spotifind.Spotify.CustomArtist;
-import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,9 +48,8 @@ public class ProfileFragment extends Fragment {
 
     private LocalUser user;
     private String uid;
-    private BottomNavigationView navBar;
     private ImageButton spotifyButton;
-
+    private Boolean _isPrivateProfile;
 
     public ProfileFragment() {
         // Constructor vacío requerido
@@ -76,25 +83,26 @@ public class ProfileFragment extends Fragment {
         else{
             user= new LocalUser(getContext(),uid,token);
         }
-        setInterface(view, user);
+        setInterface(view, user, isPrivateProfile);
         return view;
     }
 
-    private void setInterface(View view, LocalUser user) {
+    private void setInterface(View view, LocalUser user, Boolean isPrivateProfile) {
 
+        _isPrivateProfile=isPrivateProfile;
         textNickname = view.findViewById(R.id.textNickname);
         userImage = view.findViewById(R.id.imageView);
         editButton = view.findViewById(R.id.buttonEdit);
-        spotifyButton = view.findViewById(R.id.buttonSpotify);
         recyclerView = view.findViewById(R.id.recyclerViewTop5Artists);
         Button buttonTopSongs = view.findViewById(R.id.buttonTopSongs);
         Button buttonTopArtists = view.findViewById(R.id.buttonTopArtists);
-
 
         // Lista de artistas para el carrusel, reemplazar con datos reales
         List<CustomArtist> artistList = new ArrayList<>();
 
         textNickname.setText(user.getUsername());
+
+        loadImageFromFirebaseStorage(user.imageUrl(), userImage);
 
         // Configurar el adaptador y el RecyclerView
         recyclerView.setLayoutManager(new LinearLayoutManager(getActivity(), LinearLayoutManager.HORIZONTAL, false));
@@ -117,16 +125,8 @@ public class ProfileFragment extends Fragment {
             }
         });
 
-
-        // Listener botón Spotify
-        spotifyButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // REDIRIGIR A SPOTIFY
-            }
-        });
-
-        if (isPrivateProfile) {
+        if (_isPrivateProfile) {
+            // Si el perfil es privado, muestra los botones de editar perfil y editar cuenta de usuario
             editButton.setVisibility(View.VISIBLE);
             editButton.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -136,10 +136,23 @@ public class ProfileFragment extends Fragment {
                     startActivity(intent);
                 }
             });
-        } else {
-            editButton.setVisibility(View.GONE);
         }
 
+    }
+    private void loadImageFromFirebaseStorage(String imageReference, ImageView userImage) {
+        FirebaseStorage storage = FirebaseStorage.getInstance();
+        StorageReference storageReference = storage.getReference().child(imageReference);
+        storageReference.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+            @Override
+            public void onSuccess(Uri uri) {
+                Picasso.get().load(uri).into(userImage);
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception exception) {
+                userImage.setImageResource(R.drawable.default_profile);
+            }
+        });
     }
 
     private String getTokenFromCache(Context context) {

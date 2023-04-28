@@ -50,26 +50,6 @@
             app:srcCompat="@drawable/edit_icon"
             app:tint="@color/white" />
 
-        <ImageButton
-            android:id="@+id/buttonSpotify"
-            android:layout_width="48dp"
-            android:layout_height="49dp"
-            android:layout_marginStart="132dp"
-            android:layout_marginTop="250dp"
-            android:layout_marginEnd="132dp"
-            android:layout_marginBottom="6dp"
-            android:contentDescription="Este boton abre spotify"
-            android:scaleX="0.7"
-            android:scaleY="0.7"
-            android:src="@drawable/spotify_logo_without_text"
-            android:text="ABRIR EN SPOTIFY"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.494"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintVertical_bias="0.298" />
-
         <Button
             android:id="@+id/buttonTopArtists"
             android:layout_width="wrap_content"
@@ -102,24 +82,5 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/buttonTopSongs" />
 
-        <Button
-            android:id="@+id/rechazarButton"
-            android:layout_width="120dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="80dp"
-            android:layout_marginTop="20dp"
-            android:text="Rechazar"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/textNickname" />
-
-        <Button
-            android:id="@+id/aceptarButton"
-            android:layout_width="120dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:layout_marginEnd="80dp"
-            android:text="Aceptar"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/textNickname" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 </ScrollView>

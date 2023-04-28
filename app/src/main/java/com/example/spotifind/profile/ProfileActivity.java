@@ -34,7 +34,7 @@ public class ProfileActivity extends AppCompatActivity {
 
         // Verificar si el uid es el mismo que el uid del usuario actual utilizando SharedPreferences
         SharedPreferences sharedPreferences = getSharedPreferences("preferencias", MODE_PRIVATE);
-        String currentUserUid = sharedPreferences.getString("current_user_uid", "");
+        String currentUserUid = sharedPreferences.getString("user_id", "");
 
         // Utiliza ProfileFragment en lugar de InternalProfileFragment y PublicProfileFragment
         boolean isPrivateProfile = currentUserUid.equals(uid);

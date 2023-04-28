@@ -1,9 +1,13 @@
 package com.example.spotifind.Autentication;
+
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.Manifest;
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -16,6 +20,7 @@ import android.widget.Toast;
 
 import com.example.spotifind.R;
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.FirebaseApp;
@@ -26,22 +31,19 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-
-import java.util.HashMap;
-import java.util.Map;
-
-import android.content.Intent;
-import android.net.Uri;
-import androidx.annotation.Nullable;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
+import com.squareup.picasso.Picasso;
 
+import java.util.HashMap;
+import java.util.Map;
 
 public class SignUpActivity extends AppCompatActivity {
 
     private static final String TAG = "SignUpActivity";
     private static final int PERMISSION_REQUEST_CODE = 1;
+    private static final int RC_PICK_IMAGE = 1;
 
     // Firebase Authentication
     private FirebaseAuth mAuth;
@@ -52,23 +54,22 @@ public class SignUpActivity extends AppCompatActivity {
     private EditText mPasswordField;
     private EditText mPasswordConfirmField;
     private Button mSignUpButton;
-
-    private DatabaseReference mDatabase;
-
-
-    private static final int RC_PICK_IMAGE = 1;
-    private Uri mProfileImageUri;
     private ImageView mProfileImageView;
     private Button mSelectImageButton;
+
+    private DatabaseReference mDatabase;
+    private StorageReference mStorageRef;
+    private Uri mProfileImageUri;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.sign_up);
 
-        // Inicializar Firebase Authentication y Realtime Database
+        // Inicializar Firebase Authentication, Realtime Database y Storage
         mAuth = FirebaseAuth.getInstance();
         mDatabase = FirebaseDatabase.getInstance().getReference();
+        mStorageRef = FirebaseStorage.getInstance().getReference();
 
         // Configurar la interfaz de usuario
         setInterface();
@@ -80,13 +81,12 @@ public class SignUpActivity extends AppCompatActivity {
 
         if (requestCode == PERMISSION_REQUEST_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    selectImage();
+                selectImage();
             } else {
                 // El usuario ha denegado el permiso de almacenamiento, debes mostrar un mensaje al usuario y no acceder a la galería
             }
         }
     }
-
 
     private void setInterface() {
         // Obtener las referencias a los campos de texto y el botón en el layout
@@ -95,8 +95,8 @@ public class SignUpActivity extends AppCompatActivity {
         mPasswordField = findViewById(R.id.etPass);
         mPasswordConfirmField = findViewById(R.id.etPass2);
         mSignUpButton = findViewById(R.id.btnSignup);
+        mProfileImageView = findViewById(R.id.profile_image);
         mSelectImageButton = findViewById(R.id.select_image_button);
-        mProfileImageView= findViewById(R.id.profile_image);
 
         // Establecer el listener para el botón de registro
         mSignUpButton.setOnClickListener(new View.OnClickListener() {
@@ -105,9 +105,15 @@ public class SignUpActivity extends AppCompatActivity {
                 signUp();
             }
         });
-    }
 
-    private void signUp() {
+        // Establecer el listener para el botón de selección de imagen de perfil
+        mSelectImageButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                selectImage();
+            }
+        });
+    }private void signUp() {
         String username = muserNameField.getText().toString();
         String email = mEmailField.getText().toString();
         String password = mPasswordField.getText().toString();
@@ -140,8 +146,7 @@ public class SignUpActivity extends AppCompatActivity {
             return;
         }
 
-        mSelectImageButton.setOnClickListener(view -> selectImage());
-
+        // Verificar que el nombre de usuario no está en uso
         mDatabase.child("usernames").child(username).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
@@ -157,28 +162,7 @@ public class SignUpActivity extends AppCompatActivity {
                 Toast.makeText(SignUpActivity.this, "Error de conexion", Toast.LENGTH_SHORT).show();
             }
         });
-/*
-        // Crear una cuenta con correo electrónico y contraseña en Firebase Authentication
-        mAuth.createUserWithEmailAndPassword(email, password)
-                .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
-                    @Override
-                    public void onComplete(@NonNull Task<AuthResult> task) {
-                        if (task.isSuccessful()) {
-                            // Registro exitoso
-                            Log.d(TAG, "createUserWithEmail:success");
-                            Toast.makeText(SignUpActivity.this, "Registration successful!", Toast.LENGTH_SHORT).show();
-                            FirebaseApp.getInstance().
-                            finish(); // volver a la actividad de inicio de sesión
-                        } else {
-                            // Si el registro falla, mostrar un mensaje al usuario
-                            Log.w(TAG, "createUserWithEmail:failure", task.getException());
-                            Toast.makeText(SignUpActivity.this, "Registration failed.", Toast.LENGTH_SHORT).show();
-                            //recreate();?
-                        }
-                    }
-                });*/
     }
-
 
     private void createUserWithEmailAndPassword(final String username, final String email, final String password) {
         mAuth.createUserWithEmailAndPassword(email, password)
@@ -193,10 +177,11 @@ public class SignUpActivity extends AppCompatActivity {
                             // Guardar el nombre de usuario en la base de datos en tiempo real de Firebase
                             mDatabase.child("usernames").child(username).setValue(userId);
 
-                            //profileImage
+                            // Subir la imagen de perfil si existe
                             if (mProfileImageUri != null) {
                                 uploadProfileImage(userId, mProfileImageUri, username, email);
                             } else {
+                                // Si no hay imagen de perfil, crear el usuario en la base de datos sin imagen
                                 createUserInDatabase(userId, username, email, null);
                             }
 
@@ -210,7 +195,7 @@ public class SignUpActivity extends AppCompatActivity {
                             mDatabase.child("users").child(userId).setValue(userMap);
 
                             Toast.makeText(SignUpActivity.this, "¡Registro exitoso!", Toast.LENGTH_SHORT).show();
-                            finish(); // volver a la actividad de inicio de sesión
+                            onBackPressed();
                         } else {
                             // Si el registro falla, mostrar un mensaje al usuario
                             Log.w(TAG, "createUserWithEmail:failure", task.getException());
@@ -221,70 +206,72 @@ public class SignUpActivity extends AppCompatActivity {
     }
 
     private void selectImage() {
+        // Veríficar si el usuario ha otorgado permiso para acceder a la galería de imágenes
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSION_REQUEST_CODE);
+        } else {
+            // Si el usuario ya otorgó permiso, abrir la galería
+            Intent pickImageIntent = new Intent(Intent.ACTION_PICK);
+            pickImageIntent.setType("image/*");
+            startActivityForResult(pickImageIntent, RC_PICK_IMAGE);
         }
-        Intent intent = new Intent();
-        intent.setType("image/*");
-        intent.setAction(Intent.ACTION_GET_CONTENT);
-        startActivityForResult(Intent.createChooser(intent, "Selecciona una imagen"), RC_PICK_IMAGE);
     }
-
-    private void uploadProfileImage(final String userId, Uri profileImageUri, final String username, final String email) {
-        StorageReference storageReference = FirebaseStorage.getInstance().getReference();
-        final StorageReference profileImageRef = storageReference.child("profile_images/" + userId + ".jpg");
-
-        profileImageRef.putFile(profileImageUri).addOnCompleteListener(new OnCompleteListener<UploadTask.TaskSnapshot>() {
-            @Override
-            public void onComplete(@NonNull Task<UploadTask.TaskSnapshot> task) {
-                if (task.isSuccessful()) {
-                    profileImageRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
-                        @Override
-                        public void onSuccess(Uri uri) {
-                            String profileImageUrl = uri.toString();
-                            createUserInDatabase(userId, username, email, profileImageUrl);
-                        }
-                    });
-                } else {
-                    Toast.makeText(SignUpActivity.this, "Error al subir la imagen de perfil.", Toast.LENGTH_SHORT).show();
-                    createUserInDatabase(userId, username, email, null);
-                }
-            }
-        });
-    }
-
-    private void createUserInDatabase(String userId, String username, String email, @Nullable String profileImageUrl) {
-        // Guardar el nombre de usuario en la base de datos en tiempo real de Firebase
-        mDatabase.child("usernames").child(username).setValue(userId);
-
-        // Crear un objeto Map para guardar la información del usuario
-        Map<String, Object> userMap = new HashMap<>();
-        userMap.put("uid", userId);
-        userMap.put("username", username);
-        userMap.put("email", email);
-
-        if (profileImageUrl != null) {
-            userMap.put("profileImageUrl", profileImageUrl);
-        }
-
-        // Guardar la información del usuario en la base de datos en tiempo real de Firebase
-        mDatabase.child("users").child(userId).setValue(userMap);
-
-        Toast.makeText(SignUpActivity.this, "¡Registro exitoso!", Toast.LENGTH_SHORT).show();
-        finish(); // volver a la actividad de inicio de sesión
-    }
-
-
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        if(requestCode == RC_PICK_IMAGE && resultCode == RESULT_OK) {
+            if (data == null) {
+                // Si no se seleccionó una imagen, mostrar un mensaje al usuario
+                Toast.makeText(this, "No se pudo cargar la imagen", Toast.LENGTH_SHORT).show();
+                return;
+            }
 
-        if (requestCode == RC_PICK_IMAGE && resultCode == RESULT_OK && data != null && data.getData() != null) {
+            // Obtener la URI de la imagen seleccionada
             mProfileImageUri = data.getData();
-            mProfileImageView.setImageURI(mProfileImageUri);
+
+            // Mostrar la imagen seleccionada en el ImageView de la interfaz de usuario
+            Picasso.get().load(mProfileImageUri).into(mProfileImageView);
         }
     }
 
+    private void uploadProfileImage(final String userId, Uri uri, final String username, final String email) {
+        // Crear una referencia a la carpeta de imágenes de perfil del usuario
+        final StorageReference userImageRef = mStorageRef.child("profile_images").child(userId);// Subir la imagen de perfil a Firebase Storage
+        userImageRef.putFile(uri)
+                .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                    @Override
+                    public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                        // Obtener la URL de descarga de la imagen de perfil
+                        userImageRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                            @Override
+                            public void onSuccess(Uri uri) {
+                                String downloadUrl = uri.toString();
+                                // Crear el usuario en la base de datos en tiempo real de Firebase con la imagen de perfil
+                                createUserInDatabase(userId, username, email, downloadUrl);
 
+                            }
+                        });
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        // Si la carga falla, mostrar un mensaje al usuario
+                        Toast.makeText(SignUpActivity.this, "Error al cargar la imagen de perfil.", Toast.LENGTH_SHORT).show();
+                        Log.e(TAG, "Error al cargar la imagen de perfil.", e);
+                    }
+                });
+        }
+        private void createUserInDatabase(String userId, String username, String email, String profileImageUrl) {
+        // Crear un objeto Map para guardar la información del usuario
+            Map<String, Object> userMap = new HashMap<>();
+            userMap.put("uid", userId);
+            userMap.put("username", username);
+            userMap.put("email", email);
+            if (profileImageUrl != null) {
+                userMap.put("profileImageUrl", profileImageUrl);
+            }// Guardar la información del usuario en la base de datos en tiempo real de Firebase
+            mDatabase.child("users").child(userId).setValue(userMap);
+        }
 }

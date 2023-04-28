@@ -92,11 +92,13 @@ public class ProfileFragment extends Fragment {
         _isPrivateProfile=isPrivateProfile;
         textNickname = view.findViewById(R.id.textNickname);
         userImage = view.findViewById(R.id.imageView);
-        spotifyButton= view.findViewById(R.id.open_spotify_button);
+        spotifyButton= view.findViewById(R.id.buttonSpotify);
         editButton = view.findViewById(R.id.buttonEdit);
         recyclerView = view.findViewById(R.id.recyclerViewTop5Artists);
         Button buttonTopSongs = view.findViewById(R.id.buttonTopSongs);
         Button buttonTopArtists = view.findViewById(R.id.buttonTopArtists);
+        Button buttonAccept = view.findViewById(R.id.aceptarButton);
+        Button buttonReject = view.findViewById(R.id.rechazarButton);
 
         // Lista de artistas para el carrusel, reemplazar con datos reales
         List<CustomArtist> artistList = new ArrayList<>();
@@ -137,6 +139,8 @@ public class ProfileFragment extends Fragment {
         if (_isPrivateProfile) {
             // Si el perfil es privado, muestra los botones de editar perfil y editar cuenta de usuario
             editButton.setVisibility(View.VISIBLE);
+            buttonAccept.setVisibility(View.INVISIBLE);
+            buttonReject.setVisibility(View.INVISIBLE);
             editButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -145,12 +149,31 @@ public class ProfileFragment extends Fragment {
                     startActivity(intent);
                 }
             });
+        } else {
+            // Si el perfil es público, muestra los botones de aceptar y rechazar
+            buttonAccept.setVisibility(View.VISIBLE);
+            buttonReject.setVisibility(View.VISIBLE);
+            buttonAccept.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    // Aquí se puede agregar el código para aceptar la solicitud de amistad
+                }
+            });
+            buttonReject.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    // Aquí se puede agregar el código para rechazar la solicitud de amistad
+                }
+            });
         }
 
     }
+
+
     private void loadImageFromFirebaseStorage(String imageReference, ImageView userImage) {
         FirebaseStorage storage = FirebaseStorage.getInstance();
-        StorageReference storageReference = storage.getReference().child(imageReference);
+        //Modifica la ruta de la referencia a la carpeta de perfiles
+        StorageReference storageReference = storage.getReferenceFromUrl(imageReference);
         storageReference.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
             @Override
             public void onSuccess(Uri uri) {
@@ -163,6 +186,7 @@ public class ProfileFragment extends Fragment {
             }
         });
     }
+
 
     private String getTokenFromCache(Context context) {
         SharedPreferences sharedPreferences = context.getSharedPreferences("preferencias", Context.MODE_PRIVATE);

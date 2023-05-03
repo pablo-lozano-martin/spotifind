@@ -87,7 +87,8 @@ public class MainActivity extends AppCompatActivity {
         public void onConnected(SpotifyAppRemote spotifyAppRemote) {
             // Consultar la última canción reproducida en Firebase
             mSpotifyAppRemote = spotifyAppRemote;
-            DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference("users").child(obtenerUserId());
+            String userId = obtenerUserId();
+            DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference("users").child(userId);
             // Suscribirse a los cambios en el estado del reproductor de Spotify
             mSpotifyAppRemote.getPlayerApi().subscribeToPlayerState().setEventCallback(playerState -> {
                 if (playerState != null && playerState.track != null) {

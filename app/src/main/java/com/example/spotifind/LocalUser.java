@@ -3,51 +3,27 @@ package com.example.spotifind;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.location.Location;
 import android.util.Log;
-import android.util.Pair;
 
 import androidx.annotation.NonNull;
 
 import com.example.spotifind.Spotify.CustomArtist;
 import com.example.spotifind.Spotify.CustomTrack;
 import com.example.spotifind.Spotify.SpotifyService;
-import com.example.spotifind.Spotify.SpotifyUriService;
-import com.example.spotifind.friendlist.FriendlistActivity;
-import com.firebase.geofire.GeoFire;
-import com.firebase.geofire.GeoLocation;
-import com.firebase.geofire.GeoQuery;
-import com.firebase.geofire.GeoQueryEventListener;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
+import com.example.spotifind.profile.OnUserInitializedListener;
 import com.google.common.reflect.TypeToken;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.GenericTypeIndicator;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.gson.Gson;
-import com.spotify.android.appremote.api.SpotifyAppRemote;
-import com.spotify.protocol.client.Subscription;
-import com.spotify.protocol.types.PlayerState;
 import com.spotify.protocol.types.Track;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
-
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
 
 public class LocalUser<SpotifyApi> {
 
@@ -65,6 +41,8 @@ public class LocalUser<SpotifyApi> {
 
     private String spotifyUri;
 
+    private String profileImageUrl;
+
     public Context getContext() {
         return context;
     }
@@ -78,6 +56,8 @@ public class LocalUser<SpotifyApi> {
 
     private List<LocalUser> friendList;
 
+    private FirebaseFirestore db;
+
     public LocalUser(){
     }
 
@@ -85,7 +65,7 @@ public class LocalUser<SpotifyApi> {
         this.context = context;
 
         if (dataSnapshot.hasChild("uid")) {
-            setUsername(dataSnapshot.child("uid").getValue(String.class));
+            setUid(dataSnapshot.child("uid").getValue(String.class));
         }
 
         if (dataSnapshot.hasChild("username")) {
@@ -101,7 +81,18 @@ public class LocalUser<SpotifyApi> {
         }
 
         if (dataSnapshot.hasChild("spotifyUri")) {
-            setFcmToken(dataSnapshot.child("spotifyUri").getValue(String.class));
+            setSpotifyUri(dataSnapshot.child("spotifyUri").getValue(String.class));
+            String originalUri = dataSnapshot.child("spotifyUri").getValue(String.class);
+            String replacedUri = originalUri.replace(".", "-");
+            if (!originalUri.equals(replacedUri)) {
+                DatabaseReference ref = FirebaseDatabase.getInstance().getReference("users").child(getUid());
+                ref.child("spotifyUri").setValue(replacedUri);
+                Log.d("LocalUser", "Spotify Uri actualizado en Firebase");
+            }
+        }
+
+        if (dataSnapshot.hasChild("profileImageUrl")) {
+            setimageUrl(dataSnapshot.child("profileImageUrl").getValue(String.class));
         }
 
         if (dataSnapshot.hasChild("top5Artists")) {
@@ -122,12 +113,11 @@ public class LocalUser<SpotifyApi> {
 
         if(dataSnapshot.hasChild("friendList")){
             friendList= new ArrayList<>();
-                for (DataSnapshot songSnapshot : dataSnapshot.child("friendList").getChildren()) {
-                    LocalUser friend = songSnapshot.getValue(LocalUser.class);
-                    friendList.add(friend);
-                }
+            for (DataSnapshot songSnapshot : dataSnapshot.child("friendList").getChildren()) {
+                LocalUser friend = songSnapshot.getValue(LocalUser.class);
+                friendList.add(friend);
+            }
         }
-
 
         getSpotifyStats();
     }
@@ -140,25 +130,39 @@ public class LocalUser<SpotifyApi> {
         this.uid = getDataFromCache(context, "user_id");
         if(spotitoken!=null)
             saveSpotifyAccountUriToFirebase(spotitoken);
-        initializeMyDataFromCache();
+        initializeMyDataFromCacheStart();
+        initializeTopArtistsAndSongs();
+    }
+    public LocalUser(Context context, String spotitoken,OnUserInitializedListener listener) {
+        this.context = context;
+        context.getSharedPreferences("preferencias", Context.MODE_PRIVATE);
+        this.spotitoken=spotitoken;
+        this.uid = getDataFromCache(context, "user_id");
+        if(spotitoken!=null)
+            saveSpotifyAccountUriToFirebase(spotitoken);
+        initializeMyDataFromCache(listener);
         initializeTopArtistsAndSongs();
     }
 
-    public LocalUser(Context context, String uid,String spotitoken) {
+    public LocalUser(Context context, String uid, String spotitoken, OnUserInitializedListener listener) {
         this.context = context;
         context.getSharedPreferences("preferencias", Context.MODE_PRIVATE);
         this.spotitoken = spotitoken;
-        if(spotitoken!=null)
+        if (spotitoken != null) {
             saveSpotifyAccountUriToFirebase(spotitoken);
+        }
         if (uid != null) {
             this.uid = uid;
-            initializeOtherFromCache();
+            initializeOtherFromCache(listener);
         } else {
             this.uid = getDataFromCache(context, "user_id");
-            initializeMyDataFromCache();
+            initializeMyDataFromCache(listener);
         }
+    }
 
-        initializeTopArtistsAndSongs();
+
+    private void saveSpotifyAccountUriToFirebase(String spotitoken) {
+
     }
 
     public void setUid(String uid){
@@ -236,6 +240,7 @@ public class LocalUser<SpotifyApi> {
         return email;
     }
 
+
     public void setEmail(String email) {
         this.email = email;
         String jsonData = new Gson().toJson(email);
@@ -253,6 +258,10 @@ public class LocalUser<SpotifyApi> {
     }
 
     public String spotifyUri() {
+        String spotifyUri = this.spotifyUri;
+        if (spotifyUri != null && spotifyUri.contains("-")) {
+            spotifyUri = spotifyUri.replace("-", ".");
+        }
         return spotifyUri;
     }
 
@@ -260,6 +269,17 @@ public class LocalUser<SpotifyApi> {
         this.spotifyUri = spotifyUri;
         String jsonData = new Gson().toJson(spotifyUri);
         saveDataToCache(this.context, "spotifyUri", jsonData);
+    }
+
+
+    public String imageUrl() {
+        return profileImageUrl;
+    }
+
+    public void setimageUrl(String imageUrl) {
+        this.profileImageUrl = imageUrl;
+        String jsonData = new Gson().toJson(imageUrl);
+        saveDataToCache(this.context, "profileImageUrl", jsonData);
     }
 
     public void setFriendList(List<LocalUser> friendList) {
@@ -276,11 +296,12 @@ public class LocalUser<SpotifyApi> {
         }
         return null;
     }
-    private void initializeMyDataFromCache() {
+    private void initializeMyDataFromCache(OnUserInitializedListener listener) {
 
         List<LocalUser> cachedFriendList = getFriendListFromCache(context);
         String uid = getDataFromCache(context, "user_id");
         String username = getDataFromCache(context, "username");
+        String profileImageUrl = getDataFromCache(context, "profileImageUrl");
         String email = getDataFromCache(context, "email");
         String fcmToken = getDataFromCache(context, "fcmToken");
         String friendListJson = getDataFromCache(context, "friendList");
@@ -303,25 +324,32 @@ public class LocalUser<SpotifyApi> {
         }
 
         if (cachedFriendList != null) {
-            this.friendList = cachedFriendList;
+            this.friendList = new Gson().fromJson(friendListJson, List.class);
         }
 
         if(spotifyUri!=null){
-            this.spotifyUri = spotifyUri;
+            this.spotifyUri = new Gson().fromJson(spotifyUri, String.class);
         }
 
-        if (username == null || fcmToken == null || uid == null || spotifyUri==null) {
-            getDataFromFirebase();
+        if(profileImageUrl!=null){
+            this.profileImageUrl = new Gson().fromJson(profileImageUrl, String.class);
         }
+
+        if (username == null || fcmToken == null || uid == null || spotifyUri==null || profileImageUrl==null) {
+            getDataFromFirebase(listener);
+        }
+
     }
-
-
-    private void initializeOtherFromCache() {
+    private void initializeMyDataFromCacheStart() {
 
         List<LocalUser> cachedFriendList = getFriendListFromCache(context);
+        String uid = getDataFromCache(context, "user_id");
         String username = getDataFromCache(context, "username");
+        String profileImageUrl = getDataFromCache(context, "profileImageUrl");
         String email = getDataFromCache(context, "email");
         String fcmToken = getDataFromCache(context, "fcmToken");
+        String friendListJson = getDataFromCache(context, "friendList");
+        String spotifyUri = getDataFromCache(context,"spotifyUri");
 
         if (username != null) {
             this.username = new Gson().fromJson(username, String.class);
@@ -335,19 +363,77 @@ public class LocalUser<SpotifyApi> {
             this.fcmToken = new Gson().fromJson(fcmToken, String.class);
         }
 
-        if (cachedFriendList != null) {
-            this.friendList = cachedFriendList;
+        if (uid != null) {
+            this.uid = new Gson().fromJson(uid, String.class);
         }
-        if (username == null || fcmToken == null || uid == null) {
-            getDataFromFirebase();
+
+        if (cachedFriendList != null) {
+            this.friendList = new Gson().fromJson(friendListJson, List.class);
+        }
+
+        if(spotifyUri!=null){
+            this.spotifyUri = new Gson().fromJson(spotifyUri, String.class);
+        }
+
+        if(profileImageUrl!=null){
+            this.profileImageUrl = new Gson().fromJson(profileImageUrl, String.class);
+        }
+
+        if (username == null || fcmToken == null || uid == null || spotifyUri==null || profileImageUrl==null) {
+            getDataFromFirebaseStart();
+        }
+
+    }
+
+
+    private void initializeOtherFromCache(OnUserInitializedListener listener) {
+        String uid = getOtherDataFromCache("uid");
+        String username = getOtherDataFromCache("username");
+        String email = getOtherDataFromCache("email");
+        String fcmToken = getOtherDataFromCache("fcmToken");
+        String profileImageUrl = getOtherDataFromCache("profileImageUrl");
+        String spotifyUri = getOtherDataFromCache("spotifyUri");
+
+
+        if (uid != null) {
+            this.uid = new Gson().fromJson(uid, String.class);
+        }
+
+        if (uid != null) {
+            this.uid = new Gson().fromJson(uid, String.class);
+        }
+
+        if (username != null) {
+            this.username = new Gson().fromJson(username, String.class);
+        }
+
+        if (email != null) {
+            this.email = new Gson().fromJson(email, String.class);
+        }
+
+        if (fcmToken != null) {
+            this.fcmToken = new Gson().fromJson(fcmToken, String.class);
+        }
+
+        if (spotifyUri != null) {
+            this.spotifyUri = new Gson().fromJson(spotifyUri, String.class);
+        }
+
+        if (profileImageUrl != null) {
+            this.profileImageUrl = new Gson().fromJson(profileImageUrl, String.class);
+        }
+
+        if (username == null || fcmToken == null || uid == null || profileImageUrl == null || spotifyUri == null) {
+            initializeOtherUserFromFirebase(listener);
         }
     }
 
-    private void getDataFromFirebase() {
-        DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference("users").child(getDataFromCache(context,"user_id"));
+
+    private void getDataFromFirebase(OnUserInitializedListener listener) {
+        DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference("users").child(this.uid);
         ValueEventListener valueEventListener = new ValueEventListener() {
             @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 if (dataSnapshot.exists()) {
                     LocalUser localUser = new LocalUser(dataSnapshot, context);
 
@@ -371,6 +457,59 @@ public class LocalUser<SpotifyApi> {
                         setSpotifyUri(localUser.spotifyUri());
                     }
 
+                    if(profileImageUrl == null && localUser.imageUrl()!= null){
+                        setimageUrl(localUser.imageUrl());
+                    }
+
+                    List<LocalUser> cachedFriendList = getFriendListFromCache(context);
+                    if (friendList == null && localUser.getFriendList() != null) {
+                        setFriendList(localUser.getFriendList());
+                    }
+                    listener.onUserInitialized();
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                Log.e("LocalUser", "Error al obtener datos de Firebase", databaseError.toException());
+            }
+        };
+
+        databaseRef.addListenerForSingleValueEvent(valueEventListener);
+    }
+
+    private void getDataFromFirebaseStart() {
+        DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference("users").child(this.uid);
+        ValueEventListener valueEventListener = new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists()) {
+                    LocalUser localUser = new LocalUser(dataSnapshot, context);
+
+                    if(uid== null && localUser.getUid()!=null){
+                        setUid(localUser.getUid());
+                    }
+
+                    if (username == null && localUser.getUsername() != null) {
+                        setUsername(localUser.getUsername());
+                    }
+
+                    if (email == null && localUser.getEmail() != null) {
+                        setEmail(localUser.getEmail());
+                    }
+
+                    if (fcmToken == null && localUser.getFcmToken() != null) {
+                        setFcmToken(localUser.getFcmToken());
+                    }
+
+                    if(spotifyUri == null && localUser.spotifyUri() != null){
+                        setSpotifyUri(localUser.spotifyUri());
+                    }
+
+                    if(profileImageUrl == null && localUser.imageUrl()!= null){
+                        setimageUrl(localUser.imageUrl());
+                    }
+
                     List<LocalUser> cachedFriendList = getFriendListFromCache(context);
                     if (friendList == null && localUser.getFriendList() != null) {
                         setFriendList(localUser.getFriendList());
@@ -386,6 +525,48 @@ public class LocalUser<SpotifyApi> {
 
         databaseRef.addListenerForSingleValueEvent(valueEventListener);
     }
+
+
+    private void initializeOtherUserFromFirebase(OnUserInitializedListener listener) {
+        DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference("users").child(this.uid);
+        ValueEventListener valueEventListener = new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists()) {
+                    // Inicializa solo los campos deseados de otherUser con los datos obtenidos de Firebase
+
+                    if (dataSnapshot.hasChild("username")) {
+                        setUsername(dataSnapshot.child("username").getValue(String.class));
+                    }
+
+                    if (dataSnapshot.hasChild("top5Artists")) {
+                        top5Artists = new ArrayList<>();
+                        for (DataSnapshot artistSnapshot : dataSnapshot.child("top5Artists").getChildren()) {
+                            CustomArtist artist = artistSnapshot.getValue(CustomArtist.class);
+                            top5Artists.add(artist);
+                        }
+                    }
+
+                    if (dataSnapshot.hasChild("top5Songs")) {
+                        top5Songs = new ArrayList<>();
+                        for (DataSnapshot songSnapshot : dataSnapshot.child("top5Songs").getChildren()) {
+                            CustomTrack track = songSnapshot.getValue(CustomTrack.class);
+                            top5Songs.add(track);
+                        }
+                    }
+                    listener.onUserInitialized();
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                Log.e("LocalUser", "Error al obtener datos de Firebase", databaseError.toException());
+            }
+        };
+
+        databaseRef.addListenerForSingleValueEvent(valueEventListener);
+    }
+
 
     private void setFriendList(String topArtistsJson) {
         Type artistListType = new TypeToken<List<CustomArtist>>(){}.getType();
@@ -460,6 +641,35 @@ public class LocalUser<SpotifyApi> {
         trackSpotifyService.execute();
     }
 
+  /*  public void getSpotifyUid(String token) {
+        new SpotifyService(token, new SpotifyService.SpotifyCallback<String>() {
+            @Override
+            public void onSuccess(String result) {
+                String uid = result;
+
+                // Reemplazar caracteres no permitidos por Firebase Realtime Database
+                if (uid.contains(".") || uid.contains("$") || uid.contains("[") || uid.contains("]")) {
+                    uid = uid.replaceAll("[.$\\[\\]]", "-");
+
+                    // Agregar indicador de modificación
+                    uid += "_modified";
+                }
+
+                setSpotifyUri(uid);
+
+                // Guardar el ID de usuario en Realtime Database
+                DatabaseReference ref = FirebaseDatabase.getInstance().getReference("usuarios").child(getUid());
+                ref.child("spotifyUri").setValue(uid);
+            }
+
+            @Override
+            public void onFailure(Throwable throwable) {
+                // Manejar el error aquí
+            }
+        }).execute();
+    }*/
+
+
 
     public Track getLastPlayedSong() {
         return lastPlayedSong;
@@ -484,7 +694,7 @@ public class LocalUser<SpotifyApi> {
 
     public void setTop5Songs(List<CustomTrack> top5Songs) {
         this.top5Songs = top5Songs;
-        DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference("users").child(this.uid);
+        DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference("users").child(this.getUid());
 
         if (top5Songs != null) {
             // Update Top 5 Songs in Firebase
@@ -497,7 +707,7 @@ public class LocalUser<SpotifyApi> {
 
     public void setTop5Artists(List<CustomArtist> top5Artists) {
         this.top5Artists = top5Artists;
-        DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference("users").child(this.uid);
+        DatabaseReference databaseRef = FirebaseDatabase.getInstance().getReference("users").child(this.getUid());
 
         if (top5Artists != null) {
             // Update Top 5 Artists in Firebase
@@ -507,56 +717,4 @@ public class LocalUser<SpotifyApi> {
             Log.w("LocalUser", "Cannot update Top5Artists in Firebase, top5Artists is null");
         }
     }
-
-    private void saveAccountUriToFirebase(String userId) {
-        // Obtener una referencia a la base de datos de Firebase
-        DatabaseReference database = FirebaseDatabase.getInstance().getReference();
-
-        // Guardar el URI de la cuenta de Spotify en Firebase (puedes cambiar la estructura según tus necesidades)
-        DatabaseReference userRef = database.child("users").child(userId).child("account_uri");
-        String accountUri = "https://open.spotify.com/user/" + userId;
-        userRef.setValue(accountUri).addOnCompleteListener(new OnCompleteListener<Void>() {
-            @Override
-            public void onComplete(@NonNull Task<Void> task) {
-                if (task.isSuccessful()) {
-                    Log.d("LocalUser", "Spotify account URI saved in Firebase");
-                    setSpotifyUri(accountUri);
-                } else {
-                    Log.e("LocalUser", "Error saving Spotify account URI to Firebase", task.getException());
-                }
-            }
-        });
-    }
-
-    private void saveSpotifyAccountUriToFirebase(String accessToken) {
-        OkHttpClient client = new OkHttpClient();
-        Request request = new Request.Builder()
-                .url("https://api.spotify.com/v1/me")
-                .header("Authorization", "Bearer " + accessToken)
-                .build();
-
-        client.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(Call call, IOException e) {
-                Log.e("LocalUser", "Error getting spotify account uri", e);
-            }
-
-            @Override
-            public void onResponse(Call call, Response response) throws IOException {
-                if (response.isSuccessful()) {
-                    try {
-                        JSONObject jsonObject = new JSONObject(response.body().string());
-                        String userId = jsonObject.getString("id");
-                        saveAccountUriToFirebase(userId);
-                    } catch (JSONException e) {
-                        // Manejar el error
-                    }
-                } else {
-                    // Manejar el error
-                }
-            }
-        });
-    }
-
-
 }

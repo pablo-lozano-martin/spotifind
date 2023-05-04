@@ -22,6 +22,7 @@ public class ProfileActivity extends AppCompatActivity {
         setContentView(R.layout.profile_activity);
 
         uid = getIntent().getStringExtra("user_id");
+        boolean fromNotification = getIntent().getBooleanExtra("from_notification", false);
 
         navBar = findViewById(R.id.navbar);
         navBar.setSelectedItemId(R.id.profile);
@@ -34,22 +35,16 @@ public class ProfileActivity extends AppCompatActivity {
 
         // Verificar si el uid es el mismo que el uid del usuario actual utilizando SharedPreferences
         SharedPreferences sharedPreferences = getSharedPreferences("preferencias", MODE_PRIVATE);
-        String currentUserUid = sharedPreferences.getString("current_user_uid", "");
+        String currentUserUid = sharedPreferences.getString("user_uid", "");
+
+        if (!fromNotification || uid == null || uid.isEmpty()) {
+            uid = currentUserUid;
+        }
 
         // Utiliza ProfileFragment en lugar de InternalProfileFragment y PublicProfileFragment
         boolean isPrivateProfile = currentUserUid.equals(uid);
+
         fragmentTransaction.add(R.id.fragment_container, ProfileFragment.newInstance(isPrivateProfile, uid));
         fragmentTransaction.commit();
-
-        // Verificar si la actividad se inició a través de una notificación
-        boolean fromNotification = getIntent().getBooleanExtra("from_notification", false);
-        if (fromNotification && !isPrivateProfile) {
-            // Si la actividad se inició a través de una notificación y el perfil no es privado, establece isPrivateProfile en false
-            FragmentTransaction newFragmentTransaction = fragmentManager.beginTransaction();
-            newFragmentTransaction.replace(R.id.fragment_container, ProfileFragment.newInstance(false, uid));
-            newFragmentTransaction.commit();
-        }
     }
-
-
 }

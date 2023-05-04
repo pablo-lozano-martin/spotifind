@@ -350,7 +350,7 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
 
         for (Pair<LatLng, String> userPair : nearUsers) {
 
-            //if (!userPair.second.equals(sharedPref.getString("user_id", ""))) {
+            if (!userPair.second.equals(sharedPref.getString("user_id", ""))) {
                 LatLng userLatLng = userPair.first;
                 String userId = userPair.second;
 
@@ -378,7 +378,7 @@ public class RadarActivity extends FragmentActivity implements OnMapReadyCallbac
                     nearestUserLatLng.set(userLatLng);
                     nearestUserDistance.set((double) results[0]);
                 }
-          // }
+          }
 
             // Verifica si se han procesado todos los usuarios
             if (usersProcessed.incrementAndGet() == nearUsers.size()) {

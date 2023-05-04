@@ -44,7 +44,6 @@
                 android:textStyle="bold"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/tvSignUp" />
-
             <ImageView
                 android:id="@+id/profile_image"
                 android:layout_width="120dp"
@@ -112,14 +111,14 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
+                android:contentDescription="Enter Password"
+                android:hint="Password*"
                 android:lineSpacingExtra="3sp"
                 android:text="Password *"
                 android:textColor="@android:color/black"
                 android:textSize="14sp"
                 android:textStyle="bold"
                 app:layout_constraintStart_toStartOf="parent"
-                android:contentDescription="Enter Password"
-                android:hint="Password*"
                 app:layout_constraintTop_toBottomOf="@+id/etEmail" />
 
             <TextView
@@ -127,13 +126,13 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
+                android:contentDescription="Confirm Password"
+                android:hint="Password*"
                 android:lineSpacingExtra="3sp"
                 android:text="ConfirmPassword *"
                 android:textColor="@android:color/black"
                 android:textSize="14sp"
                 android:textStyle="bold"
-                android:contentDescription="Confirm Password"
-                android:hint="Password*"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/etPass" />
 

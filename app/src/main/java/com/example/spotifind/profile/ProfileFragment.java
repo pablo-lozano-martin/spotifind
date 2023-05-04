@@ -3,6 +3,7 @@ package com.example.spotifind.profile;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
@@ -17,14 +18,12 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.example.spotifind.Autentication.LoginActivity;
 import com.example.spotifind.CardAdapter;
 import com.example.spotifind.LocalUser;
-import com.example.spotifind.MainActivity;
 import com.example.spotifind.R;
 import com.example.spotifind.Spotify.CustomArtist;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-import com.google.firebase.auth.FirebaseAuth;
+import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,6 +44,7 @@ public class ProfileFragment extends Fragment {
     private String uid;
     private BottomNavigationView navBar;
     private ImageButton spotifyButton;
+    private Boolean _isPrivateProfile;
 
 
     public ProfileFragment() {
@@ -73,45 +73,56 @@ public class ProfileFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.publicprofile, container, false);
+
+        // Oculta la vista al principio
+        view.setVisibility(View.GONE);
+
         String token = getTokenFromCache(getContext());
-        if(isPrivateProfile)
-            user = new LocalUser(getContext(),token);
-        else{
-            user= new LocalUser(getContext(),uid,token);
+
+        OnUserInitializedListener listener = () -> {
+            // Muestra la vista cuando el usuario esté inicializado
+            view.setVisibility(View.VISIBLE);
+            setInterface(view, user, isPrivateProfile);
+        };
+
+        if (isPrivateProfile) {
+            user = new LocalUser(getContext(), token, listener);
+        } else {
+            user = new LocalUser(getContext(), uid, token, listener);
         }
-        setInterface(view, user);
+
         return view;
     }
 
-    private void setInterface(View view, LocalUser user) {
 
+    private void setInterface(View view, LocalUser user, Boolean isPrivateProfile) {
+
+        _isPrivateProfile=isPrivateProfile;
         textNickname = view.findViewById(R.id.textNickname);
         userImage = view.findViewById(R.id.imageView);
         editButton = view.findViewById(R.id.buttonEdit);
-        spotifyButton = view.findViewById(R.id.buttonSpotify);
         recyclerView = view.findViewById(R.id.recyclerViewTop5Artists);
         Button buttonTopSongs = view.findViewById(R.id.buttonTopSongs);
-        Button buttonLogout = view.findViewById(R.id.buttonLogOut);
         Button buttonTopArtists = view.findViewById(R.id.buttonTopArtists);
 
-        /*
-        // Obtener la instancia de FirebaseAuth
-        FirebaseAuth mAuth = FirebaseAuth.getInstance();
-
-        // Agregar el evento de clic al botón
-        buttonLogout.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent intent = new Intent(MainActivity.this, LoginActivity.class);
-                startActivity(intent);
-                finish();
-            }
-        });*/
 
         // Lista de artistas para el carrusel, reemplazar con datos reales
         List<CustomArtist> artistList = new ArrayList<>();
 
         textNickname.setText(user.getUsername());
+
+        /*//String userImageUrl = user.getImageUrl(); // Asegúrate de que tu clase LocalUser tenga un método para obtener la URL de la imagen del usuario
+        if (userImageUrl==null) {
+            userImage.setImageResource(R.drawable.default_profile);
+        } else {
+            Picasso.get()
+                    .load(userImageUrl)
+                    .placeholder(R.drawable.default_profile)
+                    .into(userImage);
+        }*/
+
+        userImage.setImageResource(R.drawable.profile_icon);
+
 
         // Configurar el adaptador y el RecyclerView
         recyclerView.setLayoutManager(new LinearLayoutManager(getActivity(), LinearLayoutManager.HORIZONTAL, false));
@@ -136,14 +147,10 @@ public class ProfileFragment extends Fragment {
 
 
         // Listener botón Spotify
-        spotifyButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // REDIRIGIR A SPOTIFY
-            }
-        });
 
-        if (isPrivateProfile) {
+
+        if (_isPrivateProfile) {
+            // Si el perfil es privado, muestra los botones de editar perfil y editar cuenta de usuario
             editButton.setVisibility(View.VISIBLE);
             editButton.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -153,8 +160,6 @@ public class ProfileFragment extends Fragment {
                     startActivity(intent);
                 }
             });
-        } else {
-            editButton.setVisibility(View.GONE);
         }
 
     }
@@ -163,6 +168,4 @@ public class ProfileFragment extends Fragment {
         SharedPreferences sharedPreferences = context.getSharedPreferences("preferencias", Context.MODE_PRIVATE);
         return sharedPreferences.getString("access_token", null);
     }
-
-
 }
